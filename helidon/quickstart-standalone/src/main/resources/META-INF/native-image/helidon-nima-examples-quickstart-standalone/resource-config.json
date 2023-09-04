@@ -1,0 +1,33 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/helidon/feature-metadata.properties\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.common.config.spi.ConfigProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.config.spi.ConfigParser\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.logging.common.spi.LoggingProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.nima.http.media.spi.MediaSupportProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.nima.observe.spi.ObserveProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.nima.webserver.http1.spi.Http1UpgradeProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.nima.webserver.spi.ProtocolConfigProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.nima.webserver.spi.ServerConnectionSelectorProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/jakarta.json.spi.JsonProvider\\E"
+  }, {
+    "pattern":"\\Qapplication.yaml\\E"
+  }, {
+    "pattern":"\\Qio/helidon/common/media/type/default-media-types.properties\\E"
+  }, {
+    "pattern":"\\Qlogging.properties\\E"
+  }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/nfc.nrm\\E"
+  }]},
+  "bundles":[]
+}

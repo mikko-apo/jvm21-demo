@@ -209,6 +209,10 @@
                         <executable>java</executable>
                         <longClasspath>true</longClasspath>
                         <arguments>
+                            <argument>--enable-preview</argument>
+<!-- enable following line to record new graalVM files
+                            <argument>-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/helidon-nima-examples-quickstart-standalone</argument>
+-->
                             <argument>-classpath</argument>
                             <classpath/>
                             <argument>${mainClass}</argument>
@@ -271,6 +275,11 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <additionalArgs>
+                                <additionalArg>--enable-preview</additionalArg>
+                            </additionalArgs>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
