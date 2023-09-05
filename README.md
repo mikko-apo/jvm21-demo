@@ -8,6 +8,13 @@ Demos for showcasing JVM 21 features
   * Helidon Nima uses JDK20 (4.9.2023)
 * Use that as the JDK in Idea
 
+# Notes on JDK 21
+Loom
+* HttpClient has race conditions when 200 requests fail. HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager 
+
+Helidon Nima 4.0.0-M1
+* Public release works only on JDK20 and does not handle load reliably
+
 # Native image compilation
 * To create native image executable files set JAVA_HOME and PATH manually to terminal window
   
