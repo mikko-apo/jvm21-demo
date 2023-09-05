@@ -26,9 +26,9 @@ public class HttpGetBurst {
 
     public static void main(String[] args) {
         new HttpGetBurst().runBursts(
-                "http://localhost:62057/greet",
+                "http://localhost:3000",
                 130,
-                "{\"message\":\"Hello World!\"}",
+                "Hello World!",
                 100
         );
     }
