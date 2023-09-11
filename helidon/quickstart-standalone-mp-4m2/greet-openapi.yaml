@@ -1,0 +1,53 @@
+
+components: 
+  schemas:
+    GreetingMessage: 
+      properties:
+        message: 
+          type: string
+      type: object
+info: 
+  title: Generated API
+  version: '1.0'
+openapi: 3.0.3
+paths:
+  /greet: 
+    get: 
+      responses:
+        '200': 
+          content:
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/GreetingMessage'
+          description: OK
+  /greet/greeting: 
+    put: 
+      requestBody: 
+        content:
+          application/json: 
+            schema: 
+              required:
+              - greeting
+              type: object
+        required: true
+      responses:
+        '204': 
+          description: Greeting updated
+        '400': 
+          description: JSON did not contain setting for 'greeting'
+  /greet/{name}: 
+    get: 
+      parameters:
+      - 
+        in: path
+        name: name
+        required: true
+        schema: 
+          type: string
+      responses:
+        '200': 
+          content:
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/GreetingMessage'
+          description: OK

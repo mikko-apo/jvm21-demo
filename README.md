@@ -1,23 +1,38 @@
 # jvm21-demos
 Demos for showcasing JVM 21 features
 
-# Getting things working
-
-* Download graalvm-community-jdk20
-  * https://github.com/graalvm/homebrew-tap `brew install --cask graalvm/tap/graalvm-community-jdk20`
-  * Helidon Nima uses JDK20 (4.9.2023)
-* Use that as the JDK in Idea
-
 # Notes on JDK 21
 Loom
-* HttpClient has race conditions when 200 requests fail. HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager 
+* HttpClient has race conditions when 200 requests fail. HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager
 
-Helidon Nima 4.0.0-M1
-* Public release works only on JDK20 and does not handle load reliably
+# Helidon 4.0.0-M2
 
-# Native image compilation
+* Directory [quickstart-standalone-mp-4m2](helidon%2Fquickstart-standalone-mp-4m2)
+* Deps: JDK21, there is no graalvm21
+* OpenApi, metrics, health
+
+## Open api generation
+
+```
+brew install openapi-generator
+curl http://localhost:8080/openapi > greet-openapi.yaml
+openapi-generator generate -i greet-openapi.yaml -g typescript-fetch -o greet-ts-fetch-client/
+npx openapi-zod-client greet-openapi.yaml -o ../../zodios-client/greet-zodios-client.ts
+```
+
+# Helidon 4.0.0-M1
+
+* Directory: [quickstart-standalone](helidon%2Fquickstart-standalone) 
+* Deps: JDK20, GraalVM20
+    * Download JDK20 somehow
+* Does not include CDI, fast startup
+* Working graalvm compilation
+
+## Native image compilation
+* Download graalvm-community-jdk20
+  * https://github.com/graalvm/homebrew-tap `brew install --cask graalvm/tap/graalvm-community-jdk20`
 * To create native image executable files set JAVA_HOME and PATH manually to terminal window
-  
+
        JDK_PATH=/Library/Java/JavaVirtualMachines/graalvm-community-openjdk-20.0.2+9.1/Contents/Home
        export JAVA_HOME=${JDK_PATH}
        export PATH=${JDK_PATH}/bin:$PATH

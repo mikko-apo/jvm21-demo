@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@zodios/core": "^10.9.6",
+    "ts-node": "^10.9.1"
+  },
+  "scripts": {
+    "greet": "ts-node index.ts"
+  }
+}
