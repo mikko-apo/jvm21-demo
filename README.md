@@ -20,6 +20,12 @@ openapi-generator generate -i greet-openapi.yaml -g typescript-fetch -o greet-ts
 npx openapi-zod-client greet-openapi.yaml -o ../../zodios-client/greet-zodios-client.ts
 ```
 
+to cache the openapi use
+
+```
+mvn process-classes 
+```
+
 # Helidon 4.0.0-M1
 
 * Directory: [quickstart-standalone](helidon%2Fquickstart-standalone) 
