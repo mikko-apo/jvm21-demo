@@ -26,33 +26,35 @@ public class HttpGetBurst {
 
     public static void main(String[] args) {
         new HttpGetBurst().runBursts(
-                "http://localhost:3000",
-                130,
+                "http://localhost:3000/sleep/30",
+                10000,
                 "Hello World!",
-                100
+                1,
+                1
         );
     }
 
-    void runBursts(String url, int reqCount, String expectedContent, int repeatCount) {
+    void runBursts(String url, int reqCount, String expectedContent, int repeatCount, Integer requestsInMs) {
         for (int i = 0; i < repeatCount; i++) {
             System.out.println(joinStrings("\n*** Running burst", i + 1));
-            runBurst(url, reqCount, expectedContent);
+            runBurst(url, reqCount, expectedContent, requestsInMs);
             Utils.sleep(Duration.ofSeconds(1));
         }
     }
 
-    void runBurst(String url, int reqCount, String expectedContent) {
+    void runBurst(String url, int reqCount, String expectedContent, Integer requestsInMs) {
         final var dest = URI.create(url);
         final var benchmark = new Benchmark();
         final var requestList = new ArrayList<RequestState>(reqCount);
         for (int i = 0; i < reqCount; i++) {
             requestList.add(new RequestState(i + 1));
         }
-        // initialize and automatically close virtualThreadExecutor, httpClient and StructuredTaskScope
-        try (final var virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
-            try (final var httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).executor(virtualThreadExecutor).build()) {
+        // initialize and automatically close threadExecutor, httpClient and StructuredTaskScope
+        try (final var threadExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
+        //try (final var threadExecutor = Executors.newCachedThreadPool()) {
+            try (final var httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).executor(threadExecutor).build()) {
                 try (final var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                    launchAndProcessRequests(scope, httpClient, requestList, dest, expectedContent, benchmark);
+                    launchAndProcessRequests(scope, httpClient, requestList, dest, expectedContent, benchmark, requestsInMs);
                 } finally {
                     // scope is closed in finally block, it's safe to process requestList
                     printResults(requestList);
@@ -67,8 +69,8 @@ public class HttpGetBurst {
             ArrayList<RequestState> requestList,
             URI dest,
             String expectedContent,
-            Benchmark benchmark
-    ) {
+            Benchmark benchmark,
+            Integer requestsInMs) {
         // launch requests from a forked virtual thread. if any request fails, this thread should stop sending requests
         scope.fork(() -> {
             requestList.forEach(requestState -> {
@@ -96,12 +98,17 @@ public class HttpGetBurst {
                             throw t;
                         }
                     });
-                    if (requestState.id % 1000 == 0) {
-                        benchmark.print("Forked request counter", requestState.id);
-                    }
+                    logIfNeeded(benchmark, requestState);
+                    sleepIfNeeded(requestsInMs);
                 }
             });
             benchmark.print("Launched", requestList.size(), "requests in total");
+            benchmark.print("Memory",
+                    Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(),
+                    "total",
+                    Runtime.getRuntime().totalMemory(),
+                    "free",
+                    Runtime.getRuntime().freeMemory());
             return "";
         });
         // wait until all forked virtual threads are finished or one of them fails
@@ -121,6 +128,23 @@ public class HttpGetBurst {
             throw new RuntimeException(message, e);
         }
         benchmark.print(requestList.size(), "requests completed without errors");
+    }
+
+    private static void logIfNeeded(Benchmark benchmark, RequestState requestState) {
+        if (requestState.id % 1000 == 0) {
+            benchmark.print("Forked request counter", requestState.id);
+        }
+    }
+
+    private static void sleepIfNeeded(Integer requestsInMs) {
+        if (requestsInMs != null) {
+            if (requestsInMs == 1) {
+                Utils.sleep(Duration.ofMillis(1));
+            } else {
+                final var sleepNanos = 1_000_000 / requestsInMs;
+                Utils.sleep(Duration.ofNanos(sleepNanos));
+            }
+        }
     }
 
     private static String getUrlAndAssertContent(HttpClient httpClient, URI url, String expectedContent, RequestState requestState, Benchmark benchmark) {
