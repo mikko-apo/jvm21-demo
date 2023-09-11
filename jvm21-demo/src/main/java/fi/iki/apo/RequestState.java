@@ -8,16 +8,16 @@ import java.util.ArrayList;
 import static fi.iki.apo.util.StringHelpers.joinStrings;
 import static fi.iki.apo.util.StringHelpers.joinStringsWithDelimiter;
 
-class RequestState {
-    long id;
+public class RequestState {
+    public long id;
     ForkState forkState = ForkState.NotProcessed;
-    boolean interruptedSend = false;
-    Exception sendError = null;
-    Integer badStatusCode = null;
-    String badContent = null;
-    boolean ok = false;
+    public boolean interruptedSend = false;
+    public Exception sendError = null;
+    public Integer badStatusCode = null;
+    public String badContent = null;
+    public boolean ok = false;
     public Throwable unhandledError;
-    Benchmark.Duration duration = null;
+    public Benchmark.Duration duration = null;
 
     public enum ForkState {NotProcessed, Forking, InterruptedBeforeFork, Forked}
 
