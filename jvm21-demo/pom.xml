@@ -48,6 +48,16 @@
       <version>${kotlin.version}</version>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>org.jetbrains.kotlin</groupId>
+          <artifactId>kotlin-stdlib-jdk8</artifactId>
+          <version>${kotlin.version}</version>
+      </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <version>${kotlin.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -146,9 +156,8 @@
             </goals>
             <configuration>
               <sourceDirs>
-                <source>src/main/kotlin</source>
                 <source>src/main/java</source>
-                <source>target/generated-sources/annotations</source>
+                <source>src/main/kotlin</source>
               </sourceDirs>
             </configuration>
           </execution>
@@ -158,12 +167,6 @@
             <goals>
               <goal>test-compile</goal>
             </goals>
-            <configuration>
-              <sourceDirs>
-                <source>src/test/java</source>
-                <source>target/generated-test-sources/test-annotations</source>
-              </sourceDirs>
-            </configuration>
           </execution>
         </executions>
         <configuration>
