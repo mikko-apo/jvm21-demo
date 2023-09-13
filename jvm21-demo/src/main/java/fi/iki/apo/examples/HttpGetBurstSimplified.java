@@ -16,9 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.StructuredTaskScope;
 
-import static fi.iki.apo.util.Benchmark.formatDuration;
 import static fi.iki.apo.util.CollectionHelpers.groupBy;
 import static fi.iki.apo.util.CollectionHelpers.split;
+import static fi.iki.apo.util.StringHelpers.formatDuration;
 import static fi.iki.apo.util.StringHelpers.joinStrings;
 
 public class HttpGetBurstSimplified {

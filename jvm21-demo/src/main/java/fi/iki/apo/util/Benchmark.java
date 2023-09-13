@@ -1,5 +1,7 @@
 package fi.iki.apo.util;
 
+import static fi.iki.apo.util.StringHelpers.formatDuration;
+
 public class Benchmark {
     private final long start = System.currentTimeMillis();
     public class Duration {
@@ -23,13 +25,6 @@ public class Benchmark {
 
     private static String printDurationLog(long duration, Object... arr) {
         return formatDuration(duration) + " - " + StringHelpers.joinStrings(arr);
-    }
-
-    public static String formatDuration(long duration) {
-        if (duration < 1000) {
-            return duration + "ms";
-        }
-        return String.format("%.3f", duration / 1000.0);
     }
 
     private long calculateDuration() {

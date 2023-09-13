@@ -2,6 +2,7 @@ package fi.iki.apo;
 
 import fi.iki.apo.util.Benchmark;
 import fi.iki.apo.util.HandledRuntimeException;
+import fi.iki.apo.util.MemoryUsage;
 import fi.iki.apo.util.StringHelpers;
 import fi.iki.apo.util.Utils;
 
@@ -17,24 +18,24 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.StructuredTaskScope;
 
-import static fi.iki.apo.util.Benchmark.formatDuration;
 import static fi.iki.apo.util.CollectionHelpers.groupBy;
 import static fi.iki.apo.util.CollectionHelpers.split;
+import static fi.iki.apo.util.StringHelpers.formatDuration;
 import static fi.iki.apo.util.StringHelpers.joinStrings;
 
 public class HttpGetBurst {
 
     public static void main(String[] args) {
         new HttpGetBurst().runBursts(
-                "http://localhost:3000/sleep/30",
-                10000,
-                "Hello World!",
-                1,
-                1
+                "http://localhost:8080/sleep/1",
+                1000,
+                "Slept 1 seconds!",
+                5000,
+                20.0
         );
     }
 
-    void runBursts(String url, int reqCount, String expectedContent, int repeatCount, Integer requestsInMs) {
+    void runBursts(String url, int reqCount, String expectedContent, int repeatCount, Double requestsInMs) {
         for (int i = 0; i < repeatCount; i++) {
             System.out.println(joinStrings("\n*** Running burst", i + 1));
             runBurst(url, reqCount, expectedContent, requestsInMs);
@@ -42,10 +43,11 @@ public class HttpGetBurst {
         }
     }
 
-    void runBurst(String url, int reqCount, String expectedContent, Integer requestsInMs) {
+    void runBurst(String url, int reqCount, String expectedContent, Double requestsInMs) {
         final var dest = URI.create(url);
         final var benchmark = new Benchmark();
         final var requestList = new ArrayList<RequestState>(reqCount);
+        final var memoryCounter = new MemoryUsage();
         for (int i = 0; i < reqCount; i++) {
             requestList.add(new RequestState(i + 1));
         }
@@ -54,10 +56,10 @@ public class HttpGetBurst {
         //try (final var threadExecutor = Executors.newCachedThreadPool()) {
             try (final var httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).executor(threadExecutor).build()) {
                 try (final var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                    launchAndProcessRequests(scope, httpClient, requestList, dest, expectedContent, benchmark, requestsInMs);
+                    launchAndProcessRequests(scope, httpClient, requestList, dest, expectedContent, benchmark, requestsInMs, memoryCounter);
                 } finally {
                     // scope is closed in finally block, it's safe to process requestList
-                    printResults(requestList);
+                    printResults(requestList, memoryCounter);
                 }
             }
         }
@@ -70,7 +72,7 @@ public class HttpGetBurst {
             URI dest,
             String expectedContent,
             Benchmark benchmark,
-            Integer requestsInMs) {
+            Double requestsInMs, MemoryUsage memoryUsage) {
         // launch requests from a forked virtual thread. if any request fails, this thread should stop sending requests
         scope.fork(() -> {
             requestList.forEach(requestState -> {
@@ -103,12 +105,7 @@ public class HttpGetBurst {
                 }
             });
             benchmark.print("Launched", requestList.size(), "requests in total");
-            benchmark.print("Memory",
-                    Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(),
-                    "total",
-                    Runtime.getRuntime().totalMemory(),
-                    "free",
-                    Runtime.getRuntime().freeMemory());
+            benchmark.print(memoryUsage.format());
             return "";
         });
         // wait until all forked virtual threads are finished or one of them fails
@@ -136,12 +133,12 @@ public class HttpGetBurst {
         }
     }
 
-    private static void sleepIfNeeded(Integer requestsInMs) {
+    private static void sleepIfNeeded(Double requestsInMs) {
         if (requestsInMs != null) {
             if (requestsInMs == 1) {
                 Utils.sleep(Duration.ofMillis(1));
             } else {
-                final var sleepNanos = 1_000_000 / requestsInMs;
+                final var sleepNanos  = (long)(1_000_000 / requestsInMs);
                 Utils.sleep(Duration.ofNanos(sleepNanos));
             }
         }
@@ -178,7 +175,7 @@ public class HttpGetBurst {
         }
     }
 
-    private void printResults(ArrayList<RequestState> requestList) {
+    private void printResults(ArrayList<RequestState> requestList, MemoryUsage memoryUsage) {
         final var sortedRequests = split(requestList, requestState -> requestState.ok);
         List<RequestState> good = sortedRequests.good;
         if (!good.isEmpty()) {
@@ -187,6 +184,7 @@ public class HttpGetBurst {
             long averageReqDurationMs = (long) (reqDurationSum / good.size());
             System.out.println(joinStrings("-", "average request duration", formatDuration(averageReqDurationMs)));
         }
+        System.out.println(memoryUsage.format());
         if (!sortedRequests.bad.isEmpty()) {
             System.out.println(joinStrings(sortedRequests.bad.size(), "requests failed"));
             final var groupedFailed = groupBy(sortedRequests.bad, RequestState::getErrorDescription);
