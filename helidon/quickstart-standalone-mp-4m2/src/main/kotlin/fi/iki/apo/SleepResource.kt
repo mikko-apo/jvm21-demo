@@ -1,4 +1,4 @@
-package io.helidon.examples.quickstart.mp;
+package fi.iki.apo;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;

@@ -9,16 +9,8 @@ import jakarta.ws.rs.core.Response
 @Path("/v2/greet")
 @RequestScoped
 open class GreetResourceV2 {
-    /**
-     * Sleep x seconds
-     *
-     * @param sleepSeconds JSON containing the new greeting
-     * @return [Response]
-     */
     @Path("{message}")
     @GET
-    open fun greet(@PathParam("message") message: String): String {
-        return "Hello $message!"
-    }
+    open fun greet(@PathParam("message") message: String): String = "Hello $message!"
 }
 

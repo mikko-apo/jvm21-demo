@@ -9,10 +9,11 @@ app.get('/greet', (req, res) => {
 
 app.get('/sleep/:seconds', (req, res) => {
     counter.add()
+    const seconds = req.params.seconds;
     setTimeout(() => {
-        res.send('Hello World!')
+        res.send('Slept '+seconds+' seconds!')
         counter.dec()
-    }, req.params.seconds * 1000)
+    }, seconds * 1000)
 })
 
 function reportOpenRequests() {
