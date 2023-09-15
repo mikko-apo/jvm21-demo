@@ -117,7 +117,7 @@ public class HttpGetBurstSimplified {
         List<RequestState> good = sortedRequests.good;
         if (!good.isEmpty()) {
             System.out.println(joinStrings(good.size(), "requests succeeded"));
-            final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs).sum();
+            final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs()).sum();
             long averageReqDurationMs = (long) (reqDurationSum / good.size());
             System.out.println(joinStrings("-", "average request duration", formatDuration(averageReqDurationMs)));
         }

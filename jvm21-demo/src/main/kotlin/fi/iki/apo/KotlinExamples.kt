@@ -8,13 +8,13 @@ fun main() {
     val name = nullabilityAsFirstClassFeature("Apo").replaceNull("null")
     val myData = MyData(name, 123)
     val updatedMyData = myData.copy(age = 25)
-    updatedMyData.save();
+    updatedMyData.save()
     println(updatedMyData.formatMyData())
 }
 
 // function as expression, functions don't need body
 // null safety as first class feature
-// safe call operator .? executes the function only if caller is non null
+// safe call operator .? executes the function only if caller is non-null
 // elvis operator ?: returns the right side if the caller is null
 fun nullabilityAsFirstClassFeature(possiblyNull: String?, defaultValue: String? = null): String? =
     possiblyNull?.plus(" pow")?.plus(" POW!") ?: defaultValue
@@ -101,6 +101,7 @@ fun whenWithFunctionCalls(x: Int, y: Int) =
 // Hot or not
 
 // Lambda syntax uses just braces { } and parameter list is inside the braces
+// it can be used to refer to single parameter
 fun mapUppercase(list: List<String>) = list.map { it.uppercase() }
 
 fun appendToName(list: List<MyData>, append: String) =

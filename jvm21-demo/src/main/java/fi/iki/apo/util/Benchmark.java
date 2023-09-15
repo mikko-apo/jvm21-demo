@@ -4,15 +4,9 @@ import static fi.iki.apo.util.StringHelpers.formatDuration;
 
 public class Benchmark {
     private final long start = System.currentTimeMillis();
-    public class Duration {
-        public final long durationMs;
 
-        public Duration(long durationMs) {
-            this.durationMs = durationMs;
-        }
-        public void print(Object... arr) {
-            printDurationLog(durationMs, arr);
-        }
+    public record Duration(long durationMs) {
+
     }
 
     public void print(Object... arr) {

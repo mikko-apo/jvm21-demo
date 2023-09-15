@@ -1,4 +1,4 @@
-package fi.iki.apo;
+package fi.iki.apo
 
 import jakarta.enterprise.context.RequestScoped
 import jakarta.ws.rs.GET
@@ -9,7 +9,7 @@ import java.time.Duration
 
 @Path("/sleep")
 @RequestScoped
-class SleepResource {
+open class SleepResource {
     /**
      * Sleep x seconds
      *
@@ -18,7 +18,7 @@ class SleepResource {
      */
     @Path("{sleepSeconds}")
     @GET
-    fun sleep(@PathParam("sleepSeconds") sleepSeconds: Long): String {
+    open fun sleep(@PathParam("sleepSeconds") sleepSeconds: Long): String {
         Thread.sleep(Duration.ofSeconds(sleepSeconds))
         return "Slept $sleepSeconds seconds!"
     }

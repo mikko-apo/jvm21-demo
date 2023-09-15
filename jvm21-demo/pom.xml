@@ -9,8 +9,7 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>jvm21-demo</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://github.com/mikko-apo/jvm21-demo</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -47,16 +46,6 @@
       <artifactId>kotlin-test</artifactId>
       <version>${kotlin.version}</version>
       <scope>test</scope>
-    </dependency>
-      <dependency>
-          <groupId>org.jetbrains.kotlin</groupId>
-          <artifactId>kotlin-stdlib-jdk8</artifactId>
-          <version>${kotlin.version}</version>
-      </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib-jdk8</artifactId>
-      <version>${kotlin.version}</version>
     </dependency>
   </dependencies>
 

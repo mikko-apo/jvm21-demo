@@ -9,7 +9,7 @@ import static fi.iki.apo.util.StringHelpers.joinStrings;
 import static fi.iki.apo.util.StringHelpers.joinStringsWithDelimiter;
 
 public class RequestState {
-    public long id;
+    public final long id;
     ForkState forkState = ForkState.NotProcessed;
     public boolean interruptedSend = false;
     public Exception sendError = null;

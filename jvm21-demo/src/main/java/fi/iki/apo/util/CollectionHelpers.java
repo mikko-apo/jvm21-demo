@@ -24,8 +24,8 @@ public class CollectionHelpers {
     }
 
     public static class SplitResult<I> {
-        public List<I> good = new ArrayList<>();
-        public List<I> bad = new ArrayList<>();
+        public final List<I> good = new ArrayList<>();
+        public final List<I> bad = new ArrayList<>();
 
         public SplitResult(List<I> list, Function<I, Boolean> splitFn) {
             list.forEach(i -> {
