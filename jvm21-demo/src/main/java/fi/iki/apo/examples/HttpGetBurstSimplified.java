@@ -107,7 +107,7 @@ public class HttpGetBurstSimplified {
             requestState.interruptedSend = true;
             throw new HandledRuntimeException(e);
         } catch (Exception e) {
-            requestState.sendError = e;
+            requestState.sendException = e;
             throw new HandledRuntimeException(e);
         }
     }

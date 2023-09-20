@@ -12,7 +12,7 @@ public class RequestState {
     public final long id;
     ForkState forkState = ForkState.NotProcessed;
     public boolean interruptedSend = false;
-    public Exception sendError = null;
+    public Exception sendException = null;
     public Integer badStatusCode = null;
     public String badContent = null;
     public boolean ok = false;
@@ -30,8 +30,8 @@ public class RequestState {
         if (ok) return null;
         if (badContent != null || badStatusCode != null)
             errors.add("bad statuscode(=" + badStatusCode + ") or content : " + badContent);
-        if (sendError != null)
-            errors.add("caught exception when preparing or processing send(): " + StringHelpers.resolveErrorDescription(sendError));
+        if (sendException != null)
+            errors.add("caught exception when processing send(): " + StringHelpers.resolveErrorDescription(sendException));
         if (interruptedSend) errors.add("interrupted send()");
         if (unhandledError != null) {
             errors.add("caught unhandled exception" + StringHelpers.resolveErrorDescription(unhandledError));

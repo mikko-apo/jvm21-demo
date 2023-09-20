@@ -27,11 +27,11 @@ public class HttpGetBurst {
 
     public static void main(String[] args) {
         new HttpGetBurst().runBursts(
-                "http://localhost:8080/sleep/1",
-                1000,
-                "Slept 1 seconds!",
-                5000,
-                20.0
+                "http://localhost:8080/sleep/20",
+                    200,
+                "Slept 20 seconds!",
+                10,
+                null
         );
     }
 
@@ -120,7 +120,7 @@ public class HttpGetBurst {
         try {
             scope.throwIfFailed();
         } catch (ExecutionException e) {
-            final var message = joinStrings("something threw an exception in StructuredTaskScope", StringHelpers.resolveErrorDescription(e));
+            final var message = joinStrings("subtask threw an exception in StructuredTaskScope", StringHelpers.resolveErrorDescription(e));
             benchmark.print(message);
             throw new RuntimeException(message, e);
         }
@@ -159,17 +159,17 @@ public class HttpGetBurst {
     }
 
     private static HttpResponse<String> executeRequest(HttpClient httpClient, URI url, RequestState requestState, Benchmark benchmark) {
+        var request = HttpRequest.newBuilder(url)
+                .GET()
+                .build();
         try {
-            var request = HttpRequest.newBuilder(url)
-                    .GET()
-                    .build();
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (InterruptedException e) {
             requestState.interruptedSend = true;
             requestState.duration = benchmark.getDuration();
             throw new HandledRuntimeException(e);
         } catch (Exception e) {
-            requestState.sendError = e;
+            requestState.sendException = e;
             requestState.duration = benchmark.getDuration();
             throw new HandledRuntimeException(e);
         }
@@ -180,7 +180,7 @@ public class HttpGetBurst {
         List<RequestState> good = sortedRequests.good;
         if (!good.isEmpty()) {
             System.out.println(joinStrings(good.size(), "requests succeeded"));
-            final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs).sum();
+            final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs()).sum();
             long averageReqDurationMs = (long) (reqDurationSum / good.size());
             System.out.println(joinStrings("-", "average request duration", formatDuration(averageReqDurationMs)));
         }

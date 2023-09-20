@@ -3,7 +3,7 @@ package fi.iki.apo
 // type inference
 // immutability as first class feature
 // val = immutable
-// destructuring
+// constructing objects without new
 fun main() {
     val name = nullabilityAsFirstClassFeature("Apo").replaceNull("null")
     val myData = MyData(name, 123)
@@ -16,6 +16,7 @@ fun main() {
 // null safety as first class feature
 // safe call operator .? executes the function only if caller is non-null
 // elvis operator ?: returns the right side if the caller is null
+// null safety is guarded on assignment, so java code setting non-null Kotlin value will fail with NullPointerException
 fun nullabilityAsFirstClassFeature(possiblyNull: String?, defaultValue: String? = null): String? =
     possiblyNull?.plus(" pow")?.plus(" POW!") ?: defaultValue
 
@@ -54,7 +55,7 @@ fun destructuring(person: MyData, people: List<MyData>, dataMap: Map<String, Int
     val (personName, personAge) = person
     println("$personName $personAge")
 
-    // list iteration+ componentN()
+    // list iteration + data class componentN()
     for ((name, age) in people) {
         println("$name $age")
     }
@@ -100,10 +101,8 @@ fun whenWithFunctionCalls(x: Int, y: Int) =
 
 // Hot or not
 
-// Lambda syntax uses just braces { } and parameter list is inside the braces
+// Lambda syntax uses just braces { } and parameter list is inside the braces instead of arrow function
 // it can be used to refer to single parameter
-fun mapUppercase(list: List<String>) = list.map { it.uppercase() }
-
 fun appendToName(list: List<MyData>, append: String) =
     list
         // destructuring MyData
@@ -114,6 +113,8 @@ fun appendToName(list: List<MyData>, append: String) =
         .map { person ->
             person.copy(name = person.name + append)
         }
+
+fun mapUppercase(list: List<String>) = list.map { it.uppercase() }
 
 // Only runtime Exceptions, no checked exceptions
 fun throwError(): Nothing = throw Exception("Hi There!")
