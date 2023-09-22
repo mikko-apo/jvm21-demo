@@ -28,7 +28,7 @@ mvn process-classes
 
 # Helidon 4.0.0-M1
 
-* Directory: [quickstart-standalone](helidon%2Fquickstart-standalone) 
+* Directory: [nima-quickstart-standalone-graalvm20](helidon%2Fquickstart-standalone-graalvm20) 
 * Deps: JDK20, GraalVM20
     * Download JDK20 somehow
 * Does not include CDI, fast startup
