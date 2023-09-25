@@ -1,9 +1,10 @@
 # jvm21-demos
-Demos for showcasing JVM 21 features
+Demos for showcasing JVM 21, Kotlin, GraalVM features
 
-# Notes on JDK 21
+# Notes
 Loom
-* HttpClient has race conditions when 200 requests fail. HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager
+* HttpClient has race conditions when 200 requests fail. This affects jvm21-demo/src/main/java/fi/iki/apo/HttpGetBurst.java
+  * HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager. See  [JDK-8316580](https://bugs.java.com/bugdatabase/view_bug?bug_id=JDK-8316580)
 
 # General setup instructions for Intellij Idea
 
@@ -29,7 +30,7 @@ Loom
 
 # Helidon 4.0.0-M2
 
-* Directory [quickstart-standalone-mp-4m2](helidon%2Fquickstart-standalone-mp-4m2)
+* Directory [!quickstart-standalone-mp-4m2](helidon%2Fquickstart-standalone-mp-4m2)
 * Deps: JDK21
   *  GraalVM is buggy
 * OpenApi, metrics, health
@@ -48,6 +49,11 @@ to cache the openapi use
 ```
 mvn process-classes 
 ```
+
+## Metrics
+
+curl http://localhost:8080/metrics
+
 
 # Helidon 4.0.0-M1 for Native image compilation
 
