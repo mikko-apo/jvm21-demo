@@ -27,17 +27,17 @@ public class HttpGetBurst {
 
     public static void main(String[] args) {
         new HttpGetBurst().runBursts(
-                "http://localhost:8080/sleep/20",
-                    200,
-                "Slept 20 seconds!",
-                10,
+                "http://localhost:8080/sleep/1",
+                200,
+                "Slept 1 seconds!",
+                5,
                 null
         );
     }
 
     void runBursts(String url, int reqCount, String expectedContent, int repeatCount, Double requestsInMs) {
         for (int i = 0; i < repeatCount; i++) {
-            System.out.println(joinStrings("\n*** Running burst", i + 1));
+            log("\n*** Running burst", i + 1);
             runBurst(url, reqCount, expectedContent, requestsInMs);
             Utils.sleep(Duration.ofSeconds(1));
         }
@@ -53,7 +53,7 @@ public class HttpGetBurst {
         }
         // initialize and automatically close threadExecutor, httpClient and StructuredTaskScope
         try (final var threadExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
-        //try (final var threadExecutor = Executors.newCachedThreadPool()) {
+            //try (final var threadExecutor = Executors.newCachedThreadPool()) {
             try (final var httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).executor(threadExecutor).build()) {
                 try (final var scope = new StructuredTaskScope.ShutdownOnFailure()) {
                     launchAndProcessRequests(scope, httpClient, requestList, dest, expectedContent, benchmark, requestsInMs, memoryCounter);
@@ -138,7 +138,7 @@ public class HttpGetBurst {
             if (requestsInMs == 1) {
                 Utils.sleep(Duration.ofMillis(1));
             } else {
-                final var sleepNanos  = (long)(1_000_000 / requestsInMs);
+                final var sleepNanos = (long) (1_000_000 / requestsInMs);
                 Utils.sleep(Duration.ofNanos(sleepNanos));
             }
         }
@@ -179,22 +179,25 @@ public class HttpGetBurst {
         final var sortedRequests = split(requestList, requestState -> requestState.ok);
         List<RequestState> good = sortedRequests.good;
         if (!good.isEmpty()) {
-            System.out.println(joinStrings(good.size(), "requests succeeded"));
+            log(good.size(), "requests succeeded");
             final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs()).sum();
             long averageReqDurationMs = (long) (reqDurationSum / good.size());
-            System.out.println(joinStrings("-", "average request duration", formatDuration(averageReqDurationMs)));
+            log("-", "average request duration", formatDuration(averageReqDurationMs));
         }
         System.out.println(memoryUsage.format());
         if (!sortedRequests.bad.isEmpty()) {
-            System.out.println(joinStrings(sortedRequests.bad.size(), "requests failed"));
+            log(sortedRequests.bad.size(), "requests failed");
             final var groupedFailed = groupBy(sortedRequests.bad, RequestState::getErrorDescription);
             final var sortedFailedKeys = new ArrayList<>(groupedFailed.keySet());
             sortedFailedKeys.sort(Comparator.comparingInt(k -> groupedFailed.get(k).size()));
             for (String key : sortedFailedKeys) {
                 var failed = groupedFailed.get(key);
-                System.out.println(joinStrings("-", key, failed.size()));
+                log("-", key, failed.size());
             }
         }
     }
 
+    private void log(Object... arr) {
+        System.out.printf(joinStrings(arr));
+    }
 }
