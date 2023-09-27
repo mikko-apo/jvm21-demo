@@ -181,18 +181,17 @@ public class HttpGetBurst {
         if (!good.isEmpty()) {
             log(good.size(), "requests succeeded");
             final var reqDurationSum = good.stream().mapToDouble(req -> req.duration.durationMs()).sum();
-            long averageReqDurationMs = (long) (reqDurationSum / good.size());
-            log("-", "average request duration", formatDuration(averageReqDurationMs));
+            final var averageReqDurationMs = (reqDurationSum / good.size());
+            log("-", "average request duration", formatDuration((long) averageReqDurationMs));
         }
         System.out.println(memoryUsage.format());
         if (!sortedRequests.bad.isEmpty()) {
             log(sortedRequests.bad.size(), "requests failed");
             final var groupedFailed = groupBy(sortedRequests.bad, RequestState::getErrorDescription);
-            final var sortedFailedKeys = new ArrayList<>(groupedFailed.keySet());
-            sortedFailedKeys.sort(Comparator.comparingInt(k -> groupedFailed.get(k).size()));
-            for (String key : sortedFailedKeys) {
-                var failed = groupedFailed.get(key);
-                log("-", key, failed.size());
+            final var sortedFailed = new ArrayList<>(groupedFailed.entrySet());
+            sortedFailed.sort(Comparator.comparingInt(entry -> entry.getValue().size()));
+            for (var entry : sortedFailed) {
+                log("-", entry.getKey(), entry.getValue().size());
             }
         }
     }
