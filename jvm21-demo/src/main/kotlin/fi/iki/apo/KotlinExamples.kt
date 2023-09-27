@@ -3,6 +3,7 @@ package fi.iki.apo
 // type inference
 // immutability as first class feature
 // val = immutable
+// data class and .copy()
 // constructing objects without new
 fun main() {
     val name = nullabilityAsFirstClassFeature("Apo").replaceNull("null")
@@ -17,12 +18,13 @@ fun main() {
 // safe call operator .? executes the function only if caller is non-null
 // elvis operator ?: returns the right side if the caller is null
 // null safety is guarded on assignment, so java code setting non-null Kotlin value will fail with NullPointerException
+// - note: constructors can bypass null safety if they use values before setting
 fun nullabilityAsFirstClassFeature(possiblyNull: String?, defaultValue: String? = null): String? =
     possiblyNull?.plus(" pow")?.plus(" POW!") ?: defaultValue
 
 // data class automatically defines .equals()/.hashCode(), .toString(), .copy() and .componentN() for destructuring
 // var = mutable variable
-// default parameters
+// functions and constructors can have default parameters
 // string templates
 data class MyData(val name: String, var age: Int = 21) {
     fun formatMyData() = "$name age: $age"
@@ -36,7 +38,17 @@ val immutableSet: Set<Int> = mutableSetOf(1, 2, 3)
 val immutableMap: Map<String, Int> = mutableMapOf(
     "1" to 1, // to = infix function shorthand to Pair()
     "2" to 2,
-    Pair("3", 3))
+    Pair("3", 3)
+)
+
+// Collections have groupBy, fold, reduce and other helper functions
+// Hot or Not:
+// - Lambda syntax uses just braces { } and parameter list is inside the braces instead of arrow function
+// - it can be used to refer to lambda's single parameter
+
+val groupedInts = immutableList.groupBy { i -> i % 2 }
+val summedInts = immutableList.fold(0) { acc: Int, i: Int -> acc + i }
+val sumOfInts = immutableList.sumOf { it }
 
 // extension function can be defined in a separate file, module, project
 fun MyData.save() {
@@ -50,8 +62,19 @@ fun <O> O?.replaceNull(o: O): O {
 }
 
 // destructuring
+// uses componentN() functions to get values
+// note: destructuring is based on order, not symbol name. add type definitions if needed
 fun destructuring(person: MyData, people: List<MyData>, dataMap: Map<String, Int>) {
-    // uses componentN() functions to get values
+
+    // list
+    val (a,b) = listOf(1,2)
+
+    // map iteration
+    for ((key, value) in dataMap) {
+        println("$key $value")
+    }
+
+    // data class
     val (personName, personAge) = person
     println("$personName $personAge")
 
@@ -60,13 +83,11 @@ fun destructuring(person: MyData, people: List<MyData>, dataMap: Map<String, Int
         println("$name $age")
     }
 
-    // map iteration
-    for ((key, value) in dataMap) {
-        println("$key $value")
-    }
+    // lambda
+    people.forEach { (name, age) ->   println("$name $age")}
 }
 
-// super-charged when
+// super-charged when with exhaustiveness checking
 fun whenAsSwitch(name: String?) =
     when (name) {
         "Apo", "Mikko" -> 1
@@ -97,25 +118,6 @@ fun whenWithFunctionCalls(x: Int, y: Int) =
         else -> print("x+y is odd")
     }
 
-//
-
-// Hot or not
-
-// Lambda syntax uses just braces { } and parameter list is inside the braces instead of arrow function
-// it can be used to refer to single parameter
-fun appendToName(list: List<MyData>, append: String) =
-    list
-        // destructuring MyData
-        .map { (name, age) ->
-            MyData(name + append, age)
-        }
-        // using copy()
-        .map { person ->
-            person.copy(name = person.name + append)
-        }
-
-fun mapUppercase(list: List<String>) = list.map { it.uppercase() }
-
-// Only runtime Exceptions, no checked exceptions
+// Hot or Not: Only runtime Exceptions, no checked exceptions
 fun throwError(): Nothing = throw Exception("Hi There!")
 

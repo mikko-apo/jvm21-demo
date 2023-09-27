@@ -65,7 +65,7 @@ curl http://localhost:8080/metrics
 
 ## Running in Idea:
 
-* Open StandaloneQuickstartMain, right click >  JDK20
+* Open StandaloneQuickstartMain, right click Run >  JDK20
 
 ## Compiling GraalVM Native image:
 
