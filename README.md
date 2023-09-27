@@ -1,10 +1,24 @@
 # jvm21-demos
-Demos for showcasing JVM 21, Kotlin, GraalVM features
+Demos for showcasing JVM 21, Kotlin, Helidon and GraalVM features
+
+<!-- TOC -->
+* [jvm21-demos](#jvm21-demos)
+* [Notes](#notes)
+* [General setup instructions for Intellij Idea](#general-setup-instructions-for-intellij-idea)
+* [Helidon 4.0.0-M2](#helidon-400-m2)
+  * [Open api generation](#open-api-generation)
+  * [Metrics](#metrics)
+* [Helidon 4.0.0-M1 for Native image compilation](#helidon-400-m1-for-native-image-compilation)
+  * [Running in Idea](#running-in-idea)
+  * [Compiling GraalVM Native image](#compiling-graalvm-native-image)
+  * [Issues](#issues)
+<!-- TOC -->
 
 # Notes
 Loom
 * HttpClient has race conditions when 200 requests fail. This affects jvm21-demo/src/main/java/fi/iki/apo/HttpGetBurst.java
   * HttpClientImpl.awaitTermination gets stuck waiting on HttpClientImpl$SelectorManager. See  [JDK-8316580](https://bugs.java.com/bugdatabase/view_bug?bug_id=JDK-8316580)
+* GraalVM compilation works only for Helidon 4.0.0-M1 (see below)
 
 # General setup instructions for Intellij Idea
 
@@ -30,7 +44,7 @@ Loom
 
 # Helidon 4.0.0-M2
 
-* Directory [!quickstart-standalone-mp-4m2](helidon%2Fquickstart-standalone-mp-4m2)
+* Directory [helidon/quickstart-standalone-mp-4m2](helidon%2Fquickstart-standalone-mp-4m2)
 * Deps: JDK21
   *  GraalVM is buggy
 * OpenApi, metrics, health
@@ -57,17 +71,17 @@ curl http://localhost:8080/metrics
 
 # Helidon 4.0.0-M1 for Native image compilation
 
-* Directory: [nima-quickstart-standalone-graalvm20](helidon%2Fquickstart-standalone-graalvm20) 
+* Directory: [helidon/quickstart-standalone-graalvm20](helidon%2Fquickstart-standalone-graalvm20) 
 * Deps: GraalVM JDK20
     * Download JDK20 somehow
 * Does not include CDI, fast startup
 * Working graalvm compilation
 
-## Running in Idea:
+## Running in Idea
 
 * Open StandaloneQuickstartMain, right click Run >  JDK20
 
-## Compiling GraalVM Native image:
+## Compiling GraalVM Native image
 
 * To create native image executable files set JAVA_HOME and PATH manually to terminal window
 
@@ -77,7 +91,7 @@ curl http://localhost:8080/metrics
 * run `mvn clean compile package -Pnative-image`
 * Exe is available in ./target/helidon-nima-examples-quickstart-standalone
 
-### note:
+## Issues
 * Native image packaging does not work out of the box with Helidon 4.0.0-M1 quickstart-standalone
   * Delete `quickstart-standalone/src/main/resources/META-INF/native-image`
   * Uncomment line in quickstart-standalone/pom.xml exec-maven-plugin
