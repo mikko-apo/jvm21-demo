@@ -53,15 +53,18 @@ Loom
 
 ```
 brew install openapi-generator
+
 curl http://localhost:8080/openapi > greet-openapi.yaml
+
 openapi-generator generate -i greet-openapi.yaml -g typescript-fetch -o greet-ts-fetch-client/
-npx openapi-zod-client greet-openapi.yaml -o ../../zodios-client/greet-zodios-client.ts
+
+cd zodios-client; npx openapi-zod-client ../helidon/quickstart-standalone-mp-4m2/greet-openapi.yaml -o greet-zodios-client.ts
 ```
 
 to cache the openapi use
 
 ```
-mvn process-classes 
+mvn process-classes
 ```
 
 ## Metrics
