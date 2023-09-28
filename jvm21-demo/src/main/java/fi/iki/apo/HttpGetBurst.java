@@ -26,12 +26,13 @@ import static fi.iki.apo.util.StringHelpers.joinStrings;
 public class HttpGetBurst {
 
     public static void main(String[] args) {
+        final var sleepSeconds = 1;
         new HttpGetBurst().runBursts(
-                "http://localhost:8080/sleep/1",
-                200,
-                "Slept 1 seconds!",
-                5,
-                null
+                "http://localhost:8080/sleep/" + sleepSeconds,
+                1000,
+                "Slept " + sleepSeconds + " seconds!",
+                10,
+                50.0
         );
     }
 
@@ -197,6 +198,6 @@ public class HttpGetBurst {
     }
 
     private void log(Object... arr) {
-        System.out.printf(joinStrings(arr));
+        System.out.println(joinStrings(arr));
     }
 }
