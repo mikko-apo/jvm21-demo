@@ -24,7 +24,7 @@ public class StringHelpers {
         if (duration < 1000) {
             return duration + "ms";
         }
-        return String.format("%.3f", duration / 1000.0);
+        return String.format("%.3fs", duration / 1000.0);
     }
 
     public static String formatMemory(long memory) {

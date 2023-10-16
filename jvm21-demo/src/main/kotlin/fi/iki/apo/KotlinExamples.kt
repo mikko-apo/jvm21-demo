@@ -1,5 +1,8 @@
 package fi.iki.apo
 
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+
 // type inference
 // immutability as first class feature
 // val = immutable
@@ -120,4 +123,10 @@ fun whenWithFunctionCalls(x: Int, y: Int) =
 
 // Hot or Not: Only runtime Exceptions, no checked exceptions
 fun throwError(): Nothing = throw Exception("Hi There!")
-
+fun <T, R> List<T>.pmap(f: (t: T) -> R): List<R> {
+    val tasks = map { t -> Callable { f(t) } }
+    val futures = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()).use { executorService ->
+        executorService.invokeAll(tasks)
+    }
+    return futures.map { it.get() }
+}
