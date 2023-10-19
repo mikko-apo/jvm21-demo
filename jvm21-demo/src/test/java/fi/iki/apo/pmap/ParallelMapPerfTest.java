@@ -17,7 +17,7 @@ public class ParallelMapPerfTest {
 
     @Test
     public void perfFastLooper() {
-        results += performanceTest(8, listOfInts(1000000), LoadGenerator::looperFast);
+        results += performanceTest(16, listOfInts(1000000), LoadGenerator::looperFast);
     }
 
     @Test
@@ -58,7 +58,9 @@ public class ParallelMapPerfTest {
         results += warmUpResults.size();
         bm.print("Warming tested functions with", warmupItems.size(), "items");
         results += executePerformanceTests(repeats, warmupItems, testF, false);
-        bm.print("Warming up done. Testing with", items.size(), "items");
+        bm.print("Warming up done. Sleeping 1 second");
+        sleep1();
+        bm.print("Testing with", items.size(), "items");
         System.out.println("----------------------");
         results += executePerformanceTests(repeats, items, testF, true);
         System.out.println("----------------------");

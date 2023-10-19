@@ -12,7 +12,7 @@ class KotlinParallelMapPerfTest {
     @Test
     fun perfFastLooper() {
         results += performanceTest(
-            8,
+            16,
             listOfInts(1000000),
             KotlinLoadGenerator::looperFast
         )
@@ -52,7 +52,8 @@ class KotlinParallelMapPerfTest {
         results += warmUpResults.size.toLong()
         bm.print("Warming tested functions with", warmupItems.size, "items")
         results += executePerformanceTests(repeats, warmupItems, testF, false)
-        bm.print("Warming up done. Testing with", items.size, "items")
+        bm.print("Warming up done. Sleeping 1 second ", items.size, "items")
+        sleep1();
         println("----------------------")
         results += executePerformanceTests(repeats, items, testF, true)
         println("----------------------")
