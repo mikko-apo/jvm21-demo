@@ -48,6 +48,7 @@ microbenchmarking related issues. I tried take handle those with following appro
     * each tested function is warmed up also and tested 8 times
 * Functions return values and use return values to ensure that JIT does not optimize the function out
 * Functions are tested with one million items, 8 times repeatedly with one second sleep between tested functions
+* Test code is implemented fully in Java and fully in Kotlin. This ensures there are no issues switching between Java and Kotlin
 
 ## Results
 
