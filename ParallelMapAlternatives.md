@@ -40,7 +40,7 @@ I didn't manage to configure JMH to provide sensible data with the long running 
 microbenchmarking related issues. I tried take handle those with following approaches:
 
 * tests are using one million items and each approach is tested 8 items
-* data is accessed from an ArrayList of one million items. This increases CPU cache misses
+* data is accessed from an ArrayList of one million items. This increases CPU cache misses. The array is regenerated for each repeat
 * there are two load functions that use CPU. One is added to a counter n times based on the item's sequence number. Fast
   versions uses int counter, Slow versions use long counter.
 * Functions are warmed up with /10 items (100000) and there are one second sleep between each map() tested function
