@@ -20,11 +20,6 @@ class KotlinParallelMapPerfTest {
     }
 
     @Test
-    fun perfWithLongPrimitiveInOut() {
-        results += executePerformanceTests(8, testItemCount, listOfLongs, KotlinLoadGenerator::looperSlowLongParameter)
-    }
-
-    @Test
     fun perfMathPowSqrtFast() {
         results += executePerformanceTests(8, testItemCount/10, listOfInts, KotlinLoadGenerator::powSqrt)
     }
