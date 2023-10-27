@@ -1,5 +1,6 @@
 package fi.iki.apo.pmap
 
+import kotlin.math.*
 
 object KotlinLoadGenerator {
     fun looperSlowLongParameter(i: Long): Long {
@@ -31,6 +32,10 @@ object KotlinLoadGenerator {
             c += 1
         }
         return counter.toInt()
+    }
+
+    fun powSqrt(i: Int): Double {
+        return (sqrt((i + 1).toDouble()) + i).pow(2.0)
     }
 }
 

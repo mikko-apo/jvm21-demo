@@ -1,91 +1,64 @@
 package fi.iki.apo.pmap
 
 import fi.iki.apo.pmap
-import fi.iki.apo.pmap.*
-import fi.iki.apo.util.Benchmark
+import fi.iki.apo.util.PerfTest
 import org.junit.jupiter.api.Test
-import java.time.Duration
 
 class KotlinParallelMapPerfTest {
     var results: Long = 0
 
+    private val testItemCount = 1000000
+
     @Test
     fun perfFastLooper() {
-        results += performanceTest(
-            16,
-            listOfInts(1000000),
-            KotlinLoadGenerator::looperFast
-        )
+        results += executePerformanceTests(16, testItemCount, listOfInts, KotlinLoadGenerator::looperFast)
     }
 
     @Test
     fun perfSlowLooper() {
-        results += performanceTest(
-            8,
-            listOfInts(1000000),
-            KotlinLoadGenerator::looperSlow
-        )
+        results += executePerformanceTests(8, testItemCount, listOfInts, KotlinLoadGenerator::looperSlow)
     }
 
     @Test
     fun perfWithLongPrimitiveInOut() {
-        results += performanceTest(
-            8,
-            listOfLongs(1000000),
-            KotlinLoadGenerator::looperSlowLongParameter
-        )
+        results += executePerformanceTests(8, testItemCount, listOfLongs, KotlinLoadGenerator::looperSlowLongParameter)
+    }
+
+    @Test
+    fun perfMathPowSqrtFast() {
+        results += executePerformanceTests(8, testItemCount/10, listOfInts, KotlinLoadGenerator::powSqrt)
+    }
+
+    @Test
+    fun perfMathPowSqrtSlow() {
+        results += executePerformanceTests(8, testItemCount/10, listOfInts, KotlinLoadGenerator::powSqrt)
     }
 
     private val listOfInts = { size: Int -> List(size) { i -> i } }
     private val listOfLongs = { size: Int -> List(size) { i -> i.toLong() } }
 
-    private fun sleep1() {
-        Thread.sleep(Duration.ofSeconds(1))
-    }
-
-    private fun <T, R> performanceTest(repeats: Int, items: List<T>, testF: (T) -> R): Long {
-        var results: Long = 0
-        val bm = Benchmark()
-        bm.print("Warming load function")
-        val warmupItems = items.take(items.size / 10)
-        val warmUpResults = warmupItems.map(testF)
-        results += warmUpResults.size.toLong()
-        bm.print("Warming tested functions with", warmupItems.size, "items")
-        results += executePerformanceTests(repeats, warmupItems, testF, false)
-        bm.print("Warming up done. Sleeping 1 second ", items.size, "items")
-        sleep1();
-        println("----------------------")
-        results += executePerformanceTests(repeats, items, testF, true)
-        println("----------------------")
-        bm.print("Tests done")
-        return results
-    }
-
-
     private fun <T, R> executePerformanceTests(
-        repeats: Int,
-        items: List<T>,
-        testF: (T) -> R,
-        showResult: Boolean
-    ): Long {
-        var results: Long = 0
-        val benchmarkMap = { name: String, mapF: (list: List<T>, f: (t: T) -> R) -> List<R> ->
-            Benchmark.benchmarkList(items, repeats, showResult, name) { l -> mapF(l, testF) }.size
+        repeats: Int, testItemCount: Int, testDataBuilder: (Int) -> List<T>, testF: (T) -> R
+    ): Int {
+        val perf = PerfTest(testDataBuilder, testItemCount, testItemCount / 10)
+
+        perf.addWarmup("testF") { list: List<T> ->
+            list.map { testF(it) }.size
         }
 
-        results += benchmarkMap("map with Kotlin list.map{}", List<T>::mapWithoutThreads)
-        sleep1()
+        perf
+            .addTestRun("map with Kotlin list.map{}") { list -> list.mapWithoutThreads(testF).size }
+            .addTestRun("map with Kotlin List(n){}") { list -> list.mapListConstructor(testF).size }
+            .addTestRun("map with Kotlin for(t : list)") { list -> list.mapFor(testF).size }
+            .addTestRun("pmap with Kotlin fixedVirtualThreads") { list -> list.pmapFixedVirtualThreadPool(testF).size }
+            .addTestRun("pmap with Kotlin newFixedThreadPool") { list -> list.pmap(testF).size }
+            .addTestRun("pmap with Kotlin newVirtualThreadPerTaskExecutor") { list -> list.pmapVirtualThreads(testF).size }
+            .addTestRun("pmap with Kotlin Coroutines") { list -> list.pmapCoroutines(testF).size }
+            .addTestRun("pmap with Kotlin Coroutines mapAsync") { list -> list.mapAsync(testF).size }
+            .addTestRun("pmap with Kotlin Coroutines mapAsync semaphore") { list -> list.mapAsync(Runtime.getRuntime().availableProcessors(), testF).size }
+            .addTestRun("pmap with Kotlin pmapThreadPoolCoroutines") { list -> list.mapAsync(Runtime.getRuntime().availableProcessors(), testF).size }
 
-        results += benchmarkMap("pmap with Kotlin fixedVirtualThreads", List<T>::pmapFixedVirtualThreadPool)
-        sleep1()
-
-        results += benchmarkMap("pmap with Kotlin newFixedThreadPool", List<T>::pmap)
-        sleep1()
-
-        results += benchmarkMap("pmap with Kotlin newVirtualThreadPerTaskExecutor", List<T>::pmapVirtualThreads)
-        sleep1()
-
-        results += benchmarkMap("pmap with Kotlin Coroutines", List<T>::pmapCoroutines)
-        return results
+        perf.runTests(repeats, 1000)
+        return perf.testRunCount()
     }
 }

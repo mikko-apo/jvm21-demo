@@ -1,33 +1,35 @@
 package fi.iki.apo.pmap;
 
-import fi.iki.apo.util.Benchmark;
+import fi.iki.apo.util.PerfTest;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static fi.iki.apo.pmap.JavaMapAlternatives.JavaMapFn;
-import static fi.iki.apo.util.Benchmark.benchmarkList;
 
 public class ParallelMapPerfTest {
     long results = 0;
+    private int testItemCount = 1000000;
 
     @Test
     public void perfFastLooper() {
-        results += performanceTest(16, listOfInts(1000000), LoadGenerator::looperFast);
+        results += executePerformanceTests(16, testItemCount, this::listOfInts, LoadGenerator::looperFast);
     }
 
     @Test
     public void perfSlowLooper() {
-        results += performanceTest(8, listOfInts(1000000), LoadGenerator::looperSlow);
+        results += executePerformanceTests(8, testItemCount, this::listOfInts, LoadGenerator::looperSlow);
     }
 
     @Test
-    public void perfWithLongPrimitiveInOut() {
-        results += performanceTest(8, listOfLongs(1000000), LoadGenerator::looperSlowLongParameter);
+    public void perfMathPowSqrtFast() {
+        results += executePerformanceTests(8, testItemCount/10, this::listOfInts, LoadGenerator::powSqrt);
+    }
+    @Test
+    public void perfMathPowSqrtSlow() {
+        results += executePerformanceTests(8, testItemCount, this::listOfInts, LoadGenerator::powSqrt);
     }
 
     private List<Integer> listOfInts(int i) {
@@ -46,50 +48,25 @@ public class ParallelMapPerfTest {
         return arr;
     }
 
-    static public <T, R> long performanceTest(int repeats, final List<T> items, Function<T, R> testF) {
-        long results = 0;
-        final var bm = new Benchmark();
-        bm.print("Warming load function");
-        final var warmupItems = items.stream().limit(items.size() / 10).collect(Collectors.toList());
-        final var warmUpResults = new ArrayList<R>(warmupItems.size());
-        for (T warmupItem : warmupItems) {
-            warmUpResults.add(testF.apply(warmupItem));
-        }
-        results += warmUpResults.size();
-        bm.print("Warming tested functions with", warmupItems.size(), "items");
-        results += executePerformanceTests(repeats, warmupItems, testF, false);
-        bm.print("Warming up done. Sleeping 1 second");
-        sleep1();
-        bm.print("Testing with", items.size(), "items");
-        System.out.println("----------------------");
-        results += executePerformanceTests(repeats, items, testF, true);
-        System.out.println("----------------------");
-        bm.print("Tests done");
-        return results;
-    }
+    private static <T, R> long executePerformanceTests(int repeats, int testItemCount, Function<Integer, List<T>> testDataBuilder, Function<T, R> testF) {
+        final var perf = new PerfTest<>(testDataBuilder, testItemCount, testItemCount / 10);
 
-    private static <T, R> long executePerformanceTests(int repeats, List<T> items, Function<T, R> testF, boolean showResult) {
-        long results = 0;
-        results += benchmarkList(items, repeats, showResult, "map with Java for(T t : list)", (l) -> JavaMapFn.mapFor(l, testF)).size();
-        sleep1();
-        results += benchmarkList(items, repeats, showResult, "map with Java list.stream()", (l) -> JavaMapFn.mapStream(l, testF)).size();
-        sleep1();
-        results += benchmarkList(items, repeats, showResult, "pmap with Java list.parallelStream()", (l) -> JavaMapFn.pmapParallelStream(l, testF)).size();
-        sleep1();
-        results += benchmarkList(items, repeats, showResult, "pmap with Java fixedVirtualThreads", (l) -> JavaMapFn.pmapFixedVirtualThreadPool(l, testF)).size();
-        sleep1();
-        results += benchmarkList(items, repeats, showResult, "pmap with Java newFixedThreadPool", (l) -> JavaMapFn.pmapFixedThreadPool(l, testF)).size();
-        sleep1();
-        results += benchmarkList(items, repeats, showResult, "pmap with Java newVirtualThreadPerTaskExecutor", (l) -> JavaMapFn.pmapNewVirtualThread(l, testF)).size();
-        sleep1();
-        return results;
-    }
+        perf.addWarmup("testF", list -> {
+            final var warmUpResults = new ArrayList<R>(list.size());
+            for (T item : list) {
+                warmUpResults.add(testF.apply(item));
+            }
+            return warmUpResults.size();
+        });
 
-    private static void sleep1() {
-        try {
-            Thread.sleep(Duration.ofSeconds(1));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        perf.addTestRun("map with Java for(T t : list)", (l) -> JavaMapFn.mapFor(l, testF).size())
+                .addTestRun("map with Java list.stream()", (l) -> JavaMapFn.mapStream(l, testF).size())
+                .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaMapFn.pmapParallelStream(l, testF).size())
+                .addTestRun("pmap with Java fixedVirtualThreads", (l) -> JavaMapFn.pmapFixedVirtualThreadPool(l, testF).size())
+                .addTestRun("pmap with Java newFixedThreadPool", (l) -> JavaMapFn.pmapFixedThreadPool(l, testF).size())
+                .addTestRun("pmap with Java newVirtualThreadPerTaskExecutor", (l) -> JavaMapFn.pmapNewVirtualThread(l, testF).size());
+
+        perf.runTests(repeats, 1000);
+        return perf.testRunCount();
     }
 }
