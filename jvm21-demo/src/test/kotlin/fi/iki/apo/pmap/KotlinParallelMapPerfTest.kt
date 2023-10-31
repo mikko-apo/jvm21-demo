@@ -11,26 +11,23 @@ class KotlinParallelMapPerfTest {
 
     @Test
     fun perfFastLooper() {
-        results += executePerformanceTests(16, testItemCount, listOfInts, KotlinLoadGenerator::looperFast)
+        results += executePerformanceTests(16, testItemCount, KotlinLoadGenerator::listOfInts, KotlinLoadGenerator::looperFast)
     }
 
     @Test
     fun perfSlowLooper() {
-        results += executePerformanceTests(8, testItemCount, listOfInts, KotlinLoadGenerator::looperSlow)
+        results += executePerformanceTests(8, testItemCount, KotlinLoadGenerator::listOfInts, KotlinLoadGenerator::looperSlow)
     }
 
     @Test
     fun perfMathPowSqrtFast() {
-        results += executePerformanceTests(8, testItemCount/10, listOfInts, KotlinLoadGenerator::powSqrt)
+        results += executePerformanceTests(8, testItemCount/10, KotlinLoadGenerator::listOfInts, KotlinLoadGenerator::powSqrt)
     }
 
     @Test
     fun perfMathPowSqrtSlow() {
-        results += executePerformanceTests(8, testItemCount/10, listOfInts, KotlinLoadGenerator::powSqrt)
+        results += executePerformanceTests(8, testItemCount/10, KotlinLoadGenerator::listOfInts, KotlinLoadGenerator::powSqrt)
     }
-
-    private val listOfInts = { size: Int -> List(size) { i -> i } }
-    private val listOfLongs = { size: Int -> List(size) { i -> i.toLong() } }
 
     private fun <T, R> executePerformanceTests(
         repeats: Int, testItemCount: Int, testDataBuilder: (Int) -> List<T>, testF: (T) -> R
@@ -47,11 +44,11 @@ class KotlinParallelMapPerfTest {
             .addTestRun("map with Kotlin for(t : list)") { list -> list.mapFor(testF).size }
             .addTestRun("pmap with Kotlin fixedVirtualThreads") { list -> list.pmapFixedVirtualThreadPool(testF).size }
             .addTestRun("pmap with Kotlin newFixedThreadPool") { list -> list.pmap(testF).size }
-            .addTestRun("pmap with Kotlin newVirtualThreadPerTaskExecutor") { list -> list.pmapVirtualThreads(testF).size }
+            .addTestRun("pmap with Kotlin newVirtualThreadPerTaskExecutor") { list -> list.pmapNewVirtualThread(testF).size }
             .addTestRun("pmap with Kotlin Coroutines") { list -> list.pmapCoroutines(testF).size }
-            .addTestRun("pmap with Kotlin Coroutines mapAsync") { list -> list.mapAsync(testF).size }
-            .addTestRun("pmap with Kotlin Coroutines mapAsync semaphore") { list -> list.mapAsync(Runtime.getRuntime().availableProcessors(), testF).size }
-            .addTestRun("pmap with Kotlin pmapThreadPoolCoroutines") { list -> list.mapAsync(Runtime.getRuntime().availableProcessors(), testF).size }
+            .addTestRun("pmap with Kotlin Coroutines mapAsync") { list -> list.pmapCoroutinesCC(testF).size }
+            .addTestRun("pmap with Kotlin Coroutines mapAsync semaphore") { list -> list.pmapCoroutinesCCSemaphore(Runtime.getRuntime().availableProcessors(), testF).size }
+            .addTestRun("pmap with Kotlin pmapThreadPoolCoroutines") { list -> list.pmapCoroutinesThreadPool( testF).size }
 
         perf.runTests(repeats, 1000)
         return perf.testRunCount()

@@ -15,29 +15,21 @@ public class ParallelMapPerfTest {
 
     @Test
     public void perfFastLooper() {
-        results += executePerformanceTests(16, testItemCount, this::listOfInts, LoadGenerator::looperFast);
+        results += executePerformanceTests(16, testItemCount, LoadGenerator::listOfInts, LoadGenerator::looperFast);
     }
 
     @Test
     public void perfSlowLooper() {
-        results += executePerformanceTests(8, testItemCount, this::listOfInts, LoadGenerator::looperSlow);
+        results += executePerformanceTests(8, testItemCount, LoadGenerator::listOfInts, LoadGenerator::looperSlow);
     }
 
     @Test
     public void perfMathPowSqrtFast() {
-        results += executePerformanceTests(8, testItemCount/10, this::listOfInts, LoadGenerator::powSqrt);
+        results += executePerformanceTests(8, testItemCount/10, LoadGenerator::listOfInts, LoadGenerator::powSqrt);
     }
     @Test
     public void perfMathPowSqrtSlow() {
-        results += executePerformanceTests(8, testItemCount, this::listOfInts, LoadGenerator::powSqrt);
-    }
-
-    private List<Integer> listOfInts(int i) {
-        final var arr = new ArrayList<Integer>(i);
-        for (int c = 0; c < i; c++) {
-            arr.add(c);
-        }
-        return arr;
+        results += executePerformanceTests(8, testItemCount, LoadGenerator::listOfInts, LoadGenerator::powSqrt);
     }
 
     private ArrayList<Long> listOfLongs(int i) {

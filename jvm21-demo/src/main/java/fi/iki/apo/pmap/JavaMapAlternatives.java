@@ -41,8 +41,29 @@ public class JavaMapAlternatives {
         }
 
         public static <T, R> List<R> pmapFixedThreadPool(List<T> list, Function<T, R> f) {
+            int nThreads = Runtime.getRuntime().availableProcessors();
+            return pmapFixedThreadPool(list, f, nThreads);
+        }
+
+        public static <T, R> List<R> pmapFixedThreadPoolDoubleThreads(List<T> list, Function<T, R> f) {
+            int nThreads = 2 * Runtime.getRuntime().availableProcessors();
+            return pmapFixedThreadPool(list, f, nThreads);
+        }
+
+        public static <T, R> List<R> pmapFixedThreadPoolFastCreateResolve(List<T> list, Function<T, R> f) {
+            int nThreads = Runtime.getRuntime().availableProcessors();
+            final List<Callable<R>> tasks = mapFor(list, (i) -> () -> f.apply(i));
+            try (final var executorService = Executors.newFixedThreadPool(nThreads)) {
+                final var futures = executorService.invokeAll(tasks);
+                return mapFor(futures, JavaMapFn::resolveFuture);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private static <T, R> List<R> pmapFixedThreadPool(List<T> list, Function<T, R> f, int nThreads) {
             final var tasks = createTasks(list, f);
-            try (final var executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+            try (final var executorService = Executors.newFixedThreadPool(nThreads)) {
                 final var futures = executorService.invokeAll(tasks);
                 return resolveFutures(futures);
             } catch (Exception e) {
@@ -50,9 +71,19 @@ public class JavaMapAlternatives {
             }
         }
 
+
         public static <T, R> List<R> pmapFixedVirtualThreadPool(List<T> list, Function<T, R> f) {
-            final var tasks = createTasks(list, f);
             final var cpus = Runtime.getRuntime().availableProcessors();
+            return pmapFixedVirtualThreadPool(list, f, cpus);
+        }
+
+        public static <T, R> List<R> pmapFixedVirtualThreadPoolDoubleThreads(List<T> list, Function<T, R> f) {
+            final var cpus = Runtime.getRuntime().availableProcessors();
+            return pmapFixedVirtualThreadPool(list, f, cpus);
+        }
+
+        private static <T, R> List<R> pmapFixedVirtualThreadPool(List<T> list, Function<T, R> f, int cpus) {
+            final var tasks = createTasks(list, f);
             try (final var executorService =new ThreadPoolExecutor(
                     cpus,
                     cpus,
@@ -68,8 +99,6 @@ public class JavaMapAlternatives {
                 throw new RuntimeException(e);
             }
         }
-
-
 
         private static <R> List<R> resolveFutures(List<Future<R>> futures) {
             return futures.stream().map(JavaMapFn::resolveFuture).toList();

@@ -24,8 +24,10 @@ object KotlinLoadGenerator {
         return counter.toInt()
     }
 
-    fun powSqrt(i: Int): Double {
-        return (sqrt((i + 1).toDouble()) + i).pow(2.0)
+    fun powSqrt(i: Int): Int {
+        return (sqrt((i + 1).toDouble()) + i).pow(2.0).toInt()
     }
+
+    fun listOfInts(size: Int) = List(size) { i -> i }
 }
 

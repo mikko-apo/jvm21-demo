@@ -10,6 +10,8 @@
 
     <modules>
         <module>jvm21-demo</module>
+        <module>pmap-kotlin-tests</module>
+        <module>pmap-java-tests</module>
     </modules>
 
     <properties>

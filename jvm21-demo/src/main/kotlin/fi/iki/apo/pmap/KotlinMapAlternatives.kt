@@ -30,36 +30,38 @@ fun <A, B> List<A>.pmapCoroutines(f: (A) -> B): List<B> = runBlocking {
 }
 
 // code adapted from https://kt.academy/article/cc-recipes
-fun <T, R> Iterable<T>.mapAsync(
+fun <T, R> Iterable<T>.pmapCoroutinesCC(
     transformation: (T) -> R
 ): List<R> = runBlocking {
-    this@mapAsync
+    this@pmapCoroutinesCC
         .map { async { transformation(it) } }
         .awaitAll()
 }
 
 // code adapted  from https://kt.academy/article/cc-recipes
-fun <T, R> Iterable<T>.mapAsync(
+fun <T, R> Iterable<T>.pmapCoroutinesCCSemaphore(
     concurrency: Int,
     transformation: (T) -> R
 ): List<R> = runBlocking {
     val semaphore = Semaphore(concurrency)
-    this@mapAsync
+    this@pmapCoroutinesCCSemaphore
         .map { async { semaphore.withPermit { transformation(it) } } }
         .awaitAll() as List<R>
 }
 
-fun  <T, R> Iterable<T>.pmapThreadPoolCoroutines(transformation: (T) -> R): List<R>  {
-   val threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
-   val dispatcher = threadPool.asCoroutineDispatcher()
-    return runBlocking(dispatcher) {
-        this@pmapThreadPoolCoroutines
-            .map { async { transformation(it) } }
-            .awaitAll()
+fun <T, R> Iterable<T>.pmapCoroutinesThreadPool(transformation: (T) -> R): List<R> {
+    val threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    threadPool.use {
+        val dispatcher = threadPool.asCoroutineDispatcher()
+        return runBlocking(dispatcher) {
+            this@pmapCoroutinesThreadPool
+                .map { async { transformation(it) } }
+                .awaitAll()
+        }
     }
 }
 
-fun <T, R> List<T>.pmapVirtualThreads(f: (t: T) -> R): List<R> {
+fun <T, R> List<T>.pmapNewVirtualThread(f: (t: T) -> R): List<R> {
     val tasks = map { t -> Callable { f(t) } }
     val futures = Executors.newVirtualThreadPerTaskExecutor().use { executorService ->
         executorService.invokeAll(tasks)
