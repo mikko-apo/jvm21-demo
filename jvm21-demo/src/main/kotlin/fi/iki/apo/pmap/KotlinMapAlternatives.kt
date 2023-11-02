@@ -40,17 +40,17 @@ fun <T, R> Iterable<T>.pmapCoroutinesCC(
 
 // code adapted  from https://kt.academy/article/cc-recipes
 fun <T, R> Iterable<T>.pmapCoroutinesCCSemaphore(
-    concurrency: Int,
     transformation: (T) -> R
 ): List<R> = runBlocking {
+    val concurrency = getCpuCount()
     val semaphore = Semaphore(concurrency)
     this@pmapCoroutinesCCSemaphore
         .map { async { semaphore.withPermit { transformation(it) } } }
-        .awaitAll() as List<R>
+        .awaitAll()
 }
 
 fun <T, R> Iterable<T>.pmapCoroutinesThreadPool(transformation: (T) -> R): List<R> {
-    val threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    val threadPool = Executors.newFixedThreadPool(getCpuCount())
     threadPool.use {
         val dispatcher = threadPool.asCoroutineDispatcher()
         return runBlocking(dispatcher) {
@@ -71,7 +71,7 @@ fun <T, R> List<T>.pmapNewVirtualThread(f: (t: T) -> R): List<R> {
 
 fun <T, R> List<T>.pmapFixedVirtualThreadPool(f: (t: T) -> R): List<R> {
     val tasks = map { t -> Callable { f(t) } }
-    val cpus = Runtime.getRuntime().availableProcessors()
+    val cpus = getCpuCount()
     val pool = ThreadPoolExecutor(
         cpus,
         cpus,
@@ -85,5 +85,11 @@ fun <T, R> List<T>.pmapFixedVirtualThreadPool(f: (t: T) -> R): List<R> {
         executorService.invokeAll(tasks)
     }
     return futures.map { it.get() }
+}
+
+private fun getCpuCount() = Runtime.getRuntime().availableProcessors()
+
+fun <T, R> List<T>.pmapJavaStreamParallelMap(f: (t: T) -> R): List<R> {
+    return this.parallelStream().map(f).toList()
 }
 

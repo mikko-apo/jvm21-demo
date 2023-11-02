@@ -2,6 +2,7 @@ package fi.iki.apo.pmap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class LoadGenerator {
     public static int looperFast(int i) {
@@ -28,10 +29,10 @@ public class LoadGenerator {
         return (int) Math.pow(Math.sqrt(i+1)+i, 2);
     }
 
-    public static List<Integer> listOfInts(int i) {
-        final var arr = new ArrayList<Integer>(i);
+    public static <T> List<T> listOf(int i, Function<Integer, T> f) {
+        final var arr = new ArrayList<T>(i);
         for (int c = 0; c < i; c++) {
-            arr.add(c);
+            arr.add(f.apply(c));
         }
         return arr;
     }

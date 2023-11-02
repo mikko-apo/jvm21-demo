@@ -15,21 +15,21 @@ public class ParallelMapPerfTest {
 
     @Test
     public void perfFastLooper() {
-        results += executePerformanceTests(16, testItemCount, LoadGenerator::listOfInts, LoadGenerator::looperFast);
+        results += executePerformanceTests(16, testItemCount, ParallelMapPerfTest::listOfInts, LoadGenerator::looperFast);
     }
 
     @Test
     public void perfSlowLooper() {
-        results += executePerformanceTests(8, testItemCount, LoadGenerator::listOfInts, LoadGenerator::looperSlow);
+        results += executePerformanceTests(8, testItemCount, ParallelMapPerfTest::listOfInts, LoadGenerator::looperSlow);
     }
 
     @Test
     public void perfMathPowSqrtFast() {
-        results += executePerformanceTests(8, testItemCount/10, LoadGenerator::listOfInts, LoadGenerator::powSqrt);
+        results += executePerformanceTests(8, testItemCount/10, ParallelMapPerfTest::listOfInts, LoadGenerator::powSqrt);
     }
     @Test
     public void perfMathPowSqrtSlow() {
-        results += executePerformanceTests(8, testItemCount, LoadGenerator::listOfInts, LoadGenerator::powSqrt);
+        results += executePerformanceTests(8, testItemCount, ParallelMapPerfTest::listOfInts, LoadGenerator::powSqrt);
     }
 
     private ArrayList<Long> listOfLongs(int i) {
@@ -56,9 +56,18 @@ public class ParallelMapPerfTest {
                 .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaMapFn.pmapParallelStream(l, testF).size())
                 .addTestRun("pmap with Java fixedVirtualThreads", (l) -> JavaMapFn.pmapFixedVirtualThreadPool(l, testF).size())
                 .addTestRun("pmap with Java newFixedThreadPool", (l) -> JavaMapFn.pmapFixedThreadPool(l, testF).size())
-                .addTestRun("pmap with Java newVirtualThreadPerTaskExecutor", (l) -> JavaMapFn.pmapNewVirtualThread(l, testF).size());
+                .addTestRun("pmap with Java newVirtualThreadPerTaskExecutor", (l) -> JavaMapFn.pmapNewVirtualThread(l, testF).size())
+                .addTestRun("pmap with Java fixedReusedVirtualThreadPool", (l) -> JavaMapFn.pmapFixedReusedVirtualThreadPool(l, testF).size());
 
         perf.runTests(repeats, 1000);
         return perf.testRunCount();
+    }
+
+    public static List<Integer> listOfInts(int i) {
+        final var arr = new ArrayList<Integer>(i);
+        for (int c = 0; c < i; c++) {
+            arr.add(c);
+        }
+        return arr;
     }
 }

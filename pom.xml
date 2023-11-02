@@ -19,7 +19,7 @@
         <javac.target>21</javac.target>
         <maven.compiler.source>${javac.target}</maven.compiler.source>
         <maven.compiler.target>${javac.target}</maven.compiler.target>
-        <kotlin.version>1.9.20-Beta</kotlin.version>
+        <kotlin.version>1.9.20</kotlin.version>
     </properties>
 
     <dependencyManagement>

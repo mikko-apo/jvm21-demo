@@ -1,6 +1,7 @@
 package fi.iki.apo
 
 import fi.iki.apo.pmap.*
+import fi.iki.apo.pmap.JavaMapAlternatives.JavaMapFn
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.TimeUnit
 
@@ -16,11 +17,16 @@ open class KotlinPmapBenchmark {
     @Param(FAST, SLOW)
     open var loadGeneratorType: String? = null
 
-    private var items: List<Int> = listOf()
+    @Param(THOUSANDTHOUSAND, MILLION)
+    open var itemCount: String? = null
+
+    private var millionItems: List<Int> = listOf()
+    private var thousandThousandItems: List<List<Int>> = listOf()
 
     @Setup(Level.Invocation)
     fun setup() {
-        items = KotlinLoadGenerator.listOfInts(1000000)
+        millionItems = KotlinLoadGenerator.listOfInts(1000000)
+        thousandThousandItems = List(1000) {KotlinLoadGenerator.listOfInts(1000)}
     }
 
     private fun resolveLoadGenerator(): (i: Int) -> Int {
@@ -34,35 +40,58 @@ open class KotlinPmapBenchmark {
     companion object {
         const val FAST = "fast"
         const val SLOW = "slow"
+        const val THOUSANDTHOUSAND = "1000*1000"
+        const val MILLION = "1000000"
+    }
+
+    private fun runBenchmark(f: (List<Int>, (Int)->Int) -> List<Int>): List<Int> {
+        val loadGenerator = resolveLoadGenerator()
+        return when (itemCount) {
+            MILLION -> f.invoke(KotlinLoadGenerator.listOfInts(1000000), loadGenerator)
+            THOUSANDTHOUSAND -> {
+                val results = mutableListOf<Int>()
+                for(list in thousandThousandItems) {
+                    results.addAll(f.invoke(list, loadGenerator))
+                }
+                results
+            }
+            else -> throw RuntimeException("Unsupported ItemCount $itemCount")
+        }
     }
 
     @Benchmark
-    fun mapWithoutThreads() = items.mapWithoutThreads(resolveLoadGenerator())
+    fun mapWithoutThreads() = runBenchmark(List<Int>::mapWithoutThreads)
 
     @Benchmark
-    fun mapListConstructor() = items.mapListConstructor(resolveLoadGenerator())
+    fun mapListConstructor() = runBenchmark(List<Int>::mapListConstructor)
 
     @Benchmark
-    fun mapFor() = items.mapFor(resolveLoadGenerator())
+    fun mapFor() = runBenchmark(List<Int>::mapFor)
 
     @Benchmark
-    fun pmapFixedVirtualThreadPool() = items.pmapFixedVirtualThreadPool(resolveLoadGenerator())
+    fun pmapFixedVirtualThreadPool() = runBenchmark(List<Int>::pmapFixedVirtualThreadPool)
 
     @Benchmark
-    fun pmapFixedThreadPool() = items.pmap(resolveLoadGenerator())
+    fun pmapFixedThreadPool() = runBenchmark(List<Int>::pmap)
 
     @Benchmark
-    fun pmapNewVirtualThread() = items.pmapNewVirtualThread(resolveLoadGenerator())
+    fun pmapNewVirtualThread() = runBenchmark(List<Int>::pmapNewVirtualThread)
 
     @Benchmark
-    fun pmapCoroutines() = items.pmapCoroutines(resolveLoadGenerator())
+    fun pmapCoroutines() = runBenchmark(List<Int>::pmapCoroutines)
 
     @Benchmark
-    fun pmapCoroutinesCC() = items.pmapCoroutinesCC(resolveLoadGenerator())
+    fun pmapCoroutinesCC() = runBenchmark(List<Int>::pmapCoroutinesCC)
 
     @Benchmark
-    fun pmapCoroutinesCCSemaphore() = items.pmapCoroutinesCCSemaphore(Runtime.getRuntime().availableProcessors(), resolveLoadGenerator())
+    fun pmapCoroutinesCCSemaphore() = runBenchmark(List<Int>::pmapCoroutinesCCSemaphore)
 
     @Benchmark
-    fun pmapCoroutinesThreadPool() = items.pmapCoroutinesThreadPool(resolveLoadGenerator())
+    fun pmapCoroutinesThreadPool() = runBenchmark(List<Int>::pmapCoroutinesThreadPool)
+
+    @Benchmark
+    fun pmapJavaParallelStreamMap() = runBenchmark { list, f -> JavaMapFn.pmapParallelStream(list, f)}
+
+    @Benchmark
+    fun pmapKotlinParallelStreamMap() = runBenchmark(List<Int>::pmapJavaStreamParallelMap)
 }
