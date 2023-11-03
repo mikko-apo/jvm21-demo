@@ -1,6 +1,8 @@
 package fi.iki.apo;
 
-import fi.iki.apo.pmap.JavaMapAlternatives.JavaMapFn;
+import fi.iki.apo.pmap.JavaApiMap;
+import fi.iki.apo.pmap.PartitionedOpsPerThreadMap;
+import fi.iki.apo.pmap.SingleOpPerThreadMap;
 import fi.iki.apo.pmap.LoadGenerator;
 import org.openjdk.jmh.annotations.*;
 
@@ -29,7 +31,7 @@ public class JavaPmapBenchmark {
     private String itemCount;
 
     private List<Integer> millionItems;
-    private  List<List<Integer>> thousandThousandItems;
+    private List<List<Integer>> thousandThousandItems;
 
     @Setup(Level.Invocation)
     public void setup() {
@@ -47,13 +49,14 @@ public class JavaPmapBenchmark {
         throw new RuntimeException("Unsupported LoadGenerator type " + loadGeneratorType);
     }
 
-    private List<Integer> runBenchmark(BiFunction<List<Integer>, Function<Integer,Integer>, List<Integer>> f) {
+    private List<Integer> runBenchmark(BiFunction<List<Integer>, Function<Integer, Integer>, List<Integer>> f) {
         final var loadGenerator = resolveLoadGenerator();
         switch (itemCount) {
-            case MILLION: return f.apply(millionItems, loadGenerator);
+            case MILLION:
+                return f.apply(millionItems, loadGenerator);
             case THOUSANDTHOUSAND: {
                 final var results = new ArrayList<Integer>();
-                for(final var list : thousandThousandItems) {
+                for (final var list : thousandThousandItems) {
                     results.addAll(f.apply(list, loadGenerator));
                 }
                 return results;
@@ -64,45 +67,74 @@ public class JavaPmapBenchmark {
 
     @Benchmark
     public List<Integer> mapFor() {
-        return runBenchmark(JavaMapFn::mapFor);
+        return runBenchmark(JavaApiMap::mapFor);
     }
+
     @Benchmark
     public List<Integer> mapStream() {
-        return runBenchmark(JavaMapFn::mapStream);
+        return runBenchmark(JavaApiMap::mapStream);
     }
+
     @Benchmark
     public List<Integer> pmapParallelStream() {
-        return runBenchmark(JavaMapFn::pmapParallelStream);
+        return runBenchmark(JavaApiMap::pmapParallelStream);
     }
+
     @Benchmark
     public List<Integer> pmapFixedThreadPool() {
-        return runBenchmark(JavaMapFn::pmapFixedThreadPool);
+        return runBenchmark(SingleOpPerThreadMap::pmapFixedThreadPool);
     }
+
     @Benchmark
     public List<Integer> pmapFixedThreadPoolDoubleThreads() {
-        return runBenchmark(JavaMapFn::pmapFixedThreadPoolDoubleThreads);
+        return runBenchmark(SingleOpPerThreadMap::pmapFixedThreadPoolDoubleThreads);
     }
+
     @Benchmark
     public List<Integer> pmapFixedVirtualThreadPool() {
-        return runBenchmark(JavaMapFn::pmapFixedVirtualThreadPool);
+        return runBenchmark(SingleOpPerThreadMap::pmapFixedVirtualThreadPool);
     }
 
     @Benchmark
     public List<Integer> pmapFixedVirtualThreadPoolDoubleThreads() {
-        return runBenchmark(JavaMapFn::pmapFixedVirtualThreadPoolDoubleThreads);
+        return runBenchmark(SingleOpPerThreadMap::pmapFixedVirtualThreadPoolDoubleThreads);
     }
+
     @Benchmark
     public List<Integer> pmapVirtualThread() {
-        return runBenchmark(JavaMapFn::pmapNewVirtualThread);
+        return runBenchmark(SingleOpPerThreadMap::pmapNewVirtualThread);
     }
 
     @Benchmark
     public List<Integer> pmapFixedThreadPoolFastCreateResolve() {
-        return runBenchmark(JavaMapFn::pmapFixedThreadPoolFastCreateResolve);
+        return runBenchmark(SingleOpPerThreadMap::pmapFixedThreadPoolFastCreateResolve);
     }
 
     @Benchmark
-    public List<Integer> pmapFixedReusedVirtualThreadPool() {
-        return runBenchmark(JavaMapFn::pmapFixedReusedVirtualThreadPool);
+    public List<Integer> pmapPartitionSegmentFixedReused() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionSegmentFixedReused);
     }
+    @Benchmark
+    public List<Integer> pmapPartitionSegmentFixed() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionSegmentFixed);
+    }
+    @Benchmark
+    public List<Integer> pmapPartitionSegmentFJ() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionSegmentFJ);
+    }
+    @Benchmark
+    public List<Integer> pmapPartitionModuloFixedReused() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFixedReused);
+    }
+    @Benchmark
+    public List<Integer> pmapPartitionModuloFixed() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFixed);
+    }
+    @Benchmark
+    public List<Integer> pmapPartitionModuloFJ() {
+        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFJ);
+    }
+
+
+
 }

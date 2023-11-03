@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static fi.iki.apo.pmap.JavaMapAlternatives.JavaMapFn;
-
 public class ParallelMapPerfTest {
     long results = 0;
     private int testItemCount = 1000000;
@@ -23,14 +21,6 @@ public class ParallelMapPerfTest {
         results += executePerformanceTests(8, testItemCount, ParallelMapPerfTest::listOfInts, LoadGenerator::looperSlow);
     }
 
-    @Test
-    public void perfMathPowSqrtFast() {
-        results += executePerformanceTests(8, testItemCount/10, ParallelMapPerfTest::listOfInts, LoadGenerator::powSqrt);
-    }
-    @Test
-    public void perfMathPowSqrtSlow() {
-        results += executePerformanceTests(8, testItemCount, ParallelMapPerfTest::listOfInts, LoadGenerator::powSqrt);
-    }
 
     private ArrayList<Long> listOfLongs(int i) {
         final var arr = new ArrayList<Long>(i);
@@ -50,14 +40,34 @@ public class ParallelMapPerfTest {
             }
             return warmUpResults.size();
         });
+/*
+        perf
+                .addTestRun("map with Java for(T t : list)", (l) -> JavaApiMap.mapFor(l, testF).size())
+                .addTestRun("map with Java list.stream()", (l) -> JavaApiMap.mapStream(l, testF).size())
+                .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaApiMap.pmapParallelStream(l, testF).size())
 
-        perf.addTestRun("map with Java for(T t : list)", (l) -> JavaMapFn.mapFor(l, testF).size())
-                .addTestRun("map with Java list.stream()", (l) -> JavaMapFn.mapStream(l, testF).size())
-                .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaMapFn.pmapParallelStream(l, testF).size())
-                .addTestRun("pmap with Java fixedVirtualThreads", (l) -> JavaMapFn.pmapFixedVirtualThreadPool(l, testF).size())
-                .addTestRun("pmap with Java newFixedThreadPool", (l) -> JavaMapFn.pmapFixedThreadPool(l, testF).size())
-                .addTestRun("pmap with Java newVirtualThreadPerTaskExecutor", (l) -> JavaMapFn.pmapNewVirtualThread(l, testF).size())
-                .addTestRun("pmap with Java fixedReusedVirtualThreadPool", (l) -> JavaMapFn.pmapFixedReusedVirtualThreadPool(l, testF).size());
+                .addTestRun("pmap with Java fixedVirtualThreads", (l) -> SingleOpPerThreadMap.pmapFixedVirtualThreadPool(l, testF).size())
+                .addTestRun("pmap with Java newFixedThreadPool", (l) -> SingleOpPerThreadMap.pmapFixedThreadPool(l, testF).size())
+                .addTestRun("pmap with Java newVirtualThreadPerTaskExecutor", (l) -> SingleOpPerThreadMap.pmapNewVirtualThread(l, testF).size())
+                .addTestRun("pmap with Java fixedReusedVirtualThreadPool", (l) -> SingleOpPerThreadMap.pmapFixedReusedVirtualThreadPool(l, testF).size())
+                .addTestRun("pmap with Java pmapFixedThreadPoolFastCreateResolve", (l) -> SingleOpPerThreadMap.pmapFixedThreadPoolFastCreateResolve(l, testF).size())
+                .addTestRun("pmap with Java pmapFixedThreadPoolDoubleThreads", (l) -> SingleOpPerThreadMap.pmapFixedThreadPoolDoubleThreads(l, testF).size())
+                .addTestRun("pmap with Java pmapFixedVirtualThreadPoolDoubleThreads", (l) -> SingleOpPerThreadMap.pmapFixedVirtualThreadPoolDoubleThreads(l, testF).size())
+
+
+                .addTestRun("pmap with Java pmapSegmentBatching", (l) -> BatchOpsPerThreadMap.pmapSegmentBatching(l, testF).size())
+                .addTestRun("pmap with Java pmapModuloBatching", (l) -> BatchOpsPerThreadMap.pmapModuloBatching(l, testF).size())
+                .addTestRun("pmap with Java pmapForkJoinSegment", (l) -> BatchOpsPerThreadMap.pmapForkJoinSegment(l, testF).size())
+                .addTestRun("pmap with Java pmapForkJoinModulo", (l) -> BatchOpsPerThreadMap.pmapForkJoinModulo(l, testF).size());
+*/
+        perf
+                .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaApiMap.pmapParallelStream(l, testF).size())
+                .addTestRun("pmap with Java pmapSegmentBatching", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFixedReused(l, testF).size())
+                .addTestRun("pmap with Java pmapModuloBatching", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFixedReused(l, testF).size())
+                .addTestRun("pmap with Java pmapForkJoinSegment", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFJ(l, testF).size())
+                .addTestRun("pmap with Java pmapForkJoinModulo", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFJ(l, testF).size())
+                .addTestRun("pmap with Java pmapSegmentBatchingFixed", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFixed(l, testF).size())
+                .addTestRun("pmap with Java pmapModuloBatchingFixed", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFixed(l, testF).size());
 
         perf.runTests(repeats, 1000);
         return perf.testRunCount();

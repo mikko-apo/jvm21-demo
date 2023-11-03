@@ -1,7 +1,6 @@
 package fi.iki.apo
 
 import fi.iki.apo.pmap.*
-import fi.iki.apo.pmap.JavaMapAlternatives.JavaMapFn
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.TimeUnit
 
@@ -90,7 +89,7 @@ open class KotlinPmapBenchmark {
     fun pmapCoroutinesThreadPool() = runBenchmark(List<Int>::pmapCoroutinesThreadPool)
 
     @Benchmark
-    fun pmapJavaParallelStreamMap() = runBenchmark { list, f -> JavaMapFn.pmapParallelStream(list, f)}
+    fun pmapJavaParallelStreamMap() = runBenchmark { list, f -> JavaApiMap.pmapParallelStream(list, f)}
 
     @Benchmark
     fun pmapKotlinParallelStreamMap() = runBenchmark(List<Int>::pmapJavaStreamParallelMap)
