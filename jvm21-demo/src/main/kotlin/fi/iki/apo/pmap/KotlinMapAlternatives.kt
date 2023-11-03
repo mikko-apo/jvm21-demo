@@ -1,9 +1,6 @@
 package fi.iki.apo.pmap
 
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.util.concurrent.*
@@ -24,12 +21,13 @@ fun <T, R> List<T>.mapWithoutThreads(f: (t: T) -> R): List<R> {
     return this.map { f(it) }
 }
 
-fun <A, B> List<A>.pmapCoroutines(f: (A) -> B): List<B> = runBlocking {
+fun <A, B> List<A>.pmapCoroutines(f: (A) -> B): List<B> = runBlocking(Dispatchers.Default) {
     val deferred = map { async { f(it) } }
     deferred.map { it.await() }
 }
 
 // code adapted from https://kt.academy/article/cc-recipes
+// runs slowly because by default runBlocking uses only current thread
 fun <T, R> Iterable<T>.pmapCoroutinesCC(
     transformation: (T) -> R
 ): List<R> = runBlocking {
@@ -39,13 +37,15 @@ fun <T, R> Iterable<T>.pmapCoroutinesCC(
 }
 
 // code adapted  from https://kt.academy/article/cc-recipes
+// added Dispatchers.Default
+// moved Semaphore out of async, to prevent launching n Deferreds too early
 fun <T, R> Iterable<T>.pmapCoroutinesCCSemaphore(
     transformation: (T) -> R
-): List<R> = runBlocking {
+): List<R> = runBlocking(Dispatchers.Default) {
     val concurrency = getCpuCount()
     val semaphore = Semaphore(concurrency)
     this@pmapCoroutinesCCSemaphore
-        .map { async { semaphore.withPermit { transformation(it) } } }
+        .map { semaphore.withPermit { async {  transformation(it) } } }
         .awaitAll()
 }
 
