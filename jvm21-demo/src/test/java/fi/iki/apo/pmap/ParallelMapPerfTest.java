@@ -62,12 +62,27 @@ public class ParallelMapPerfTest {
 */
         perf
                 .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaApiMap.pmapParallelStream(l, testF).size())
-                .addTestRun("pmap with Java pmapSegmentBatching", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFixedReused(l, testF).size())
                 .addTestRun("pmap with Java pmapModuloBatching", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFixedReused(l, testF).size())
-                .addTestRun("pmap with Java pmapForkJoinSegment", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFJ(l, testF).size())
                 .addTestRun("pmap with Java pmapForkJoinModulo", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFJ(l, testF).size())
-                .addTestRun("pmap with Java pmapSegmentBatchingFixed", (l) -> PartitionedOpsPerThreadMap.pmapPartitionSegmentFixed(l, testF).size())
-                .addTestRun("pmap with Java pmapModuloBatchingFixed", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFixed(l, testF).size());
+                .addTestRun("pmap with Java pmapModuloBatchingFixed", (l) -> PartitionedOpsPerThreadMap.pmapPartitionModuloFixed(l, testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReusedCpu", (l) -> PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFixedReused(l, testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJCPU", (l) -> PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFJ(l, testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedCpu", (l) -> PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFixed(l, testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReused1000", (l) -> PartitionedOpsPerThreadMap.partitionSegment1000.pmapPartitionSegmentFixedReused(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJ1000", (l) -> PartitionedOpsPerThreadMap.partitionSegment1000.pmapPartitionSegmentFJ(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixed1000", (l) -> PartitionedOpsPerThreadMap.partitionSegment1000.pmapPartitionSegmentFixed(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReused500", (l) -> PartitionedOpsPerThreadMap.partitionSegment500.pmapPartitionSegmentFixedReused(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJ500", (l) -> PartitionedOpsPerThreadMap.partitionSegment500.pmapPartitionSegmentFJ(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixed500", (l) -> PartitionedOpsPerThreadMap.partitionSegment500.pmapPartitionSegmentFixed(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReused250", (l) -> PartitionedOpsPerThreadMap.partitionSegment250.pmapPartitionSegmentFixedReused(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJ250", (l) -> PartitionedOpsPerThreadMap.partitionSegment250.pmapPartitionSegmentFJ(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixed250", (l) -> PartitionedOpsPerThreadMap.partitionSegment250.pmapPartitionSegmentFixed(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReused2000", (l) -> PartitionedOpsPerThreadMap.partitionSegment2000.pmapPartitionSegmentFixedReused(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJ2000", (l) -> PartitionedOpsPerThreadMap.partitionSegment2000.pmapPartitionSegmentFJ(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixed2000", (l) -> PartitionedOpsPerThreadMap.partitionSegment2000.pmapPartitionSegmentFixed(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixedReused4000", (l) -> PartitionedOpsPerThreadMap.partitionSegment4000.pmapPartitionSegmentFixedReused(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFJ4000", (l) -> PartitionedOpsPerThreadMap.partitionSegment4000.pmapPartitionSegmentFJ(l,  testF).size())
+                .addTestRun("pmap with Java pmapPartitionSegmentFixed4000", (l) -> PartitionedOpsPerThreadMap.partitionSegment4000.pmapPartitionSegmentFixed(l,  testF).size());
 
         perf.runTests(repeats, 1000);
         return perf.testRunCount();

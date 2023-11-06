@@ -22,12 +22,32 @@ private fun mergeAndPrint(paths: List<String>, testNameFormatter: (String) -> St
     val jsonData = paths.map { gson.fromJson<List<JmhResult>>(FileReader(it), typeToken) }
     val merged = jsonData.fold(listOf<JmhResult>()) { acc, jmhResults -> acc + jmhResults }
     val groupByParams = merged.groupBy { it.params }
-    groupByParams.forEach { (params, items) ->
+    val groupedAndSortedAndRenamed = groupByParams.mapValues { (_, results) ->
+        results.sortedBy { it.primaryMetric.score }.map { it.copy(benchmark = testNameFormatter(it.benchmark)) }
+    }
+    printCategorySpreadInfo(groupedAndSortedAndRenamed)
+    printResultsByParamCategories(groupedAndSortedAndRenamed)
+    printCombinedResultsWithScaling(groupedAndSortedAndRenamed)
+}
+
+fun printCategorySpreadInfo(groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>) {
+    val categorySpread =
+        groupedAndSortedAndRenamed.entries.map { (key, results) -> key to results.lastOrNull()!!.primaryMetric.score / results.first()!!.primaryMetric.score }
+            .sortedBy { (key, spread) -> -spread }
+    println("*** Result spread by categories")
+    categorySpread.forEach { (category, spread) ->
+        println("%s %.1fx".format(category, spread))
+    }
+}
+
+private fun printResultsByParamCategories(
+    groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>
+) {
+    println("*** Results by categories")
+    groupedAndSortedAndRenamed.forEach { (params, sortedAndNamed) ->
         println(params.toString())
-        val sortedAndNamed =
-            items.sortedBy { it.primaryMetric.score }.map { it.copy(benchmark = testNameFormatter(it.benchmark)) }
         val longestBenchmarkNameLength = sortedAndNamed.max { it.benchmark.length } ?: 0
-        val first = sortedAndNamed[0]
+        val first = sortedAndNamed.first()
         sortedAndNamed.forEach { item ->
             val score = item.primaryMetric.score
             val scoreError = item.primaryMetric.scoreError
@@ -35,7 +55,7 @@ private fun mergeAndPrint(paths: List<String>, testNameFormatter: (String) -> St
             val relativeError = scoreError / score * 100
             println(
                 "%-${longestBenchmarkNameLength + 1}s %9.3f ± %4.1f%% (%8.3f) %s - %.1fx".format(
-                    testNameFormatter(item.benchmark),
+                    item.benchmark,
                     score,
                     relativeError,
                     scoreError,
@@ -44,6 +64,26 @@ private fun mergeAndPrint(paths: List<String>, testNameFormatter: (String) -> St
                 )
             )
         }
+    }
+}
+
+fun printCombinedResultsWithScaling(groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>) {
+    val fastestInCategories =
+        groupedAndSortedAndRenamed.map { (key, results) -> key to results.first().primaryMetric.score }
+    val slowestFastestInCategory =
+        fastestInCategories.maxOfOrNull { (key, score) -> score } ?: throw Exception("no max")
+    val categoryMultipliers = fastestInCategories.associate { (key, score) -> key to slowestFastestInCategory / score }
+    val benchmarkResults = groupedAndSortedAndRenamed.values.flatten()
+        .groupBy(
+            { it.benchmark },
+            { result -> categoryMultipliers.getOrElse(result.params) { throw Exception("bad category") } * result.primaryMetric.score })
+    val sortedTotalResults =
+        benchmarkResults.map { (key, results) -> key to results.sum() }.sortedBy { (key, total) -> total }
+    println("*** Totals, scaled to match")
+    val longestBenchmarkNameLength = sortedTotalResults.max { (key, score) -> key.length } ?: 0
+    val (_, firstScore) = sortedTotalResults.first()
+    sortedTotalResults.forEach { (key, score) ->
+        println("%-${longestBenchmarkNameLength + 1}s %9.3f - %.1fx".format(key, score, score / firstScore))
     }
 }
 

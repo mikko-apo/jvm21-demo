@@ -79,7 +79,7 @@ public class SingleOpPerThreadMap {
     public static <T, R> List<R> pmapFixedReusedVirtualThreadPool(List<T> list, Function<T, R> f) {
         final var tasks = createTasks(list, f);
         try {
-            final var futures = JavaMapAlternatives.reusedExecutorService.invokeAll(tasks);
+            final var futures = JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(tasks);
             return resolveFutures(futures);
         } catch (Exception e) {
             throw new RuntimeException(e);

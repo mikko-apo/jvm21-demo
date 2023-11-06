@@ -15,7 +15,7 @@ public class JavaMapAlternatives {
         return Runtime.getRuntime().availableProcessors();
     }
 
-    static final ThreadPoolExecutor reusedExecutorService = new ThreadPoolExecutor(
+    static final ThreadPoolExecutor reusedVirtualFixedThreadPool = new ThreadPoolExecutor(
             getCpuCount(),
             getCpuCount(),
             0L,
@@ -26,7 +26,7 @@ public class JavaMapAlternatives {
     );
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(reusedExecutorService::shutdownNow));
+        Runtime.getRuntime().addShutdownHook(new Thread(reusedVirtualFixedThreadPool::shutdownNow));
     }
 
 }

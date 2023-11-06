@@ -15,39 +15,62 @@ import java.util.function.Function;
 import static fi.iki.apo.pmap.JavaMapAlternatives.getCpuCount;
 
 public class PartitionedOpsPerThreadMap {
-    public static <T, R> List<R> pmapPartitionSegmentFixedReused(List<T> list, Function<T, R> f) {
-        final var result = TasksAndArray.createSegmentTasks(list.size(), (arr, min, max) -> (Callable<Boolean>) () -> {
-            mapSegment(list, arr, min, max, f);
-            return true;
-        });
-        try {
-            for (var future : JavaMapAlternatives.reusedExecutorService.invokeAll(result.tasks)) {
-                future.get();
-            }
-            return Arrays.asList((R[]) result.rArr);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public static <T, R> List<R> pmapPartitionSegmentFixed(List<T> list, Function<T, R> f) {
-        final var result = TasksAndArray.createSegmentTasks(list.size(), (arr, min, max) -> (Callable<Boolean>) () -> {
-            mapSegment(list, arr, min, max, f);
-            return true;
-        });
-        try (final var executorService = Executors.newFixedThreadPool(getCpuCount())) {
-            for (var future : executorService.invokeAll(result.tasks)) {
-                future.get();
-            }
-            return Arrays.asList((R[]) result.rArr);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public static PartitionSegment partitionSegmentCpu = new PartitionSegment(null, getCpuCount());
+    public static PartitionSegment partitionSegment250 = new PartitionSegment(250,null);
+    public static PartitionSegment partitionSegment500 = new PartitionSegment(500,null);
+    public static PartitionSegment partitionSegment1000 = new PartitionSegment(1000,null);
+    public static PartitionSegment partitionSegment2000 = new PartitionSegment(2000,null);
+    public static PartitionSegment partitionSegment4000 = new PartitionSegment(4000,null);
 
-    public static <T, R> List<R> pmapPartitionSegmentFJ(List<T> list, Function<T, R> f) {
-        final var result = TasksAndArray.createSegmentTasks(list.size(), (arr, min, max) -> new ForkJoinMapArraySegment(null, () -> mapSegment(list, arr, min, max, f)));
-        ForkJoinPool.commonPool().invoke(new ForkJoinMapArraySegment(result.tasks, null));
-        return Arrays.asList((R[]) result.rArr);
+    public record PartitionSegment(Integer blockSize, Integer segmentCount) {
+
+        private  <T> int resolveSegmentCount(List<T> list) {
+            if(segmentCount != null) {
+                return segmentCount();
+            } else if(blockSize != null) {
+                return list.size()/blockSize;
+            }
+            throw new RuntimeException("Needs blocksize or segmentCount");
+        }
+        @NotNull
+        public <T, R> List<R> pmapPartitionSegmentFixedReused(List<T> list, Function<T, R> f) {
+            final var result = TasksAndArray.createSegmentTasks(list.size(), resolveSegmentCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
+                mapSegment(list, arr, min, max, f);
+                return true;
+            });
+            try {
+                for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
+                    future.get();
+                }
+                return Arrays.asList((R[]) result.rArr);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapPartitionSegmentFixed(List<T> list, Function<T, R> f) {
+            final var result = TasksAndArray.createSegmentTasks(list.size(), resolveSegmentCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
+                mapSegment(list, arr, min, max, f);
+                return true;
+            });
+            try (final var executorService = Executors.newFixedThreadPool(getCpuCount())) {
+                for (var future : executorService.invokeAll(result.tasks)) {
+                    future.get();
+                }
+                return Arrays.asList((R[]) result.rArr);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapPartitionSegmentFJ(List<T> list, Function<T, R> f) {
+            final var result = TasksAndArray.createSegmentTasks(list.size(), resolveSegmentCount(list), (arr, min, max) -> new ForkJoinMapArraySegment(null, () -> mapSegment(list, arr, min, max, f)));
+            ForkJoinPool.commonPool().invoke(new ForkJoinMapArraySegment(result.tasks, null));
+            return Arrays.asList((R[]) result.rArr);
+        }
+
     }
 
     public static <T, R> List<R> pmapPartitionModuloFixedReused(List<T> list, Function<T, R> f) {
@@ -56,7 +79,7 @@ public class PartitionedOpsPerThreadMap {
             return true;
         });
         try {
-            for (var future : JavaMapAlternatives.reusedExecutorService.invokeAll(result.tasks)) {
+            for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
                 future.get();
             }
             return Arrays.asList((R[]) result.rArr);
@@ -88,9 +111,9 @@ public class PartitionedOpsPerThreadMap {
 
     private record TasksAndArray<M>(List<M> tasks, Object[] rArr) {
         @NotNull
-        private static <M> TasksAndArray<M> createSegmentTasks(int size, Function3<Object[], Integer, Integer, M> mapSegment) {
+        private static <M> TasksAndArray<M> createSegmentTasks(int size, int segmentCount, Function3<Object[], Integer, Integer, M> mapSegment) {
             final var rArr = new Object[size];
-            final var segments = RangeSegment.splitRange(size, getCpuCount());
+            final var segments = RangeSegment.splitRange(size, segmentCount);
             final var tasks = JavaMapAlternatives.mapFastest(segments, s -> mapSegment.invoke(rArr, s.min, s.max));
             return new TasksAndArray<>(tasks, rArr);
         }

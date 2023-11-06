@@ -17,9 +17,9 @@ public class PMapTest {
             var expected = JavaMapAlternatives.mapFastest(list, integerStringFunction);
             List<String> actual = PartitionedOpsPerThreadMap.pmapPartitionModuloFixedReused(list, integerStringFunction);
             assertEquals(expected, actual);
-            List<String> actual1 = PartitionedOpsPerThreadMap.pmapPartitionSegmentFixedReused(list, integerStringFunction);
+            List<String> actual1 = PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFixedReused(list, integerStringFunction);
             assertEquals(expected, actual1);
-            List<String> actual2 = PartitionedOpsPerThreadMap.pmapPartitionSegmentFJ(list, integerStringFunction);
+            List<String> actual2 = PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFJ(list, integerStringFunction);
             assertEquals(expected, actual2);
             List<String> actual3 = PartitionedOpsPerThreadMap.pmapPartitionModuloFJ(list, integerStringFunction);
             assertEquals(expected, actual3);
