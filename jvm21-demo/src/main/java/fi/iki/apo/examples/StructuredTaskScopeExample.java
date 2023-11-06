@@ -14,18 +14,19 @@ public class StructuredTaskScopeExample {
 
     void scopeExample(List<ItemData> items) {
         try (final var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            scope.fork(() -> { // launcher scope
+            final var launcherSubTask = scope.fork(() -> {
                 items.forEach(item -> {
-                    // Check for early error before launching all items. Not sure if this works.
+                    // If any subtask fails, scope interrupts all subtasks. When interrupted stop sending requests
                     if (!Thread.currentThread().isInterrupted()) {
-                        // launch virtual thread for each item
+                        // launch subtask (virtual thread) for each item
                         scope.fork(() -> updateItem(item));
                     }
                 });
-                return "";
+                return "OK";
             });
             try {
-                scope.join(); // wait until all forked virtual threads are finished or one of them fails
+                scope.join(); // wait until all forked subtasks are finished or one of them fails
+                System.out.printf("Result: " + launcherSubTask.get());
             } catch (InterruptedException e) {
                 throw new RuntimeException("scope.join() was interrupted", e);
             }
