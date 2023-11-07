@@ -1,6 +1,8 @@
 package fi.iki.apo.pmap;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +27,13 @@ public class JavaMapAlternatives {
             new ThreadPoolExecutor.AbortPolicy()
     );
 
+    static final ExecutorService reusedFixedThreadPool = Executors.newFixedThreadPool(getCpuCount());
+
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(reusedVirtualFixedThreadPool::shutdownNow));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            reusedVirtualFixedThreadPool.shutdownNow();
+            reusedFixedThreadPool.shutdownNow();
+        }));
     }
 
 }

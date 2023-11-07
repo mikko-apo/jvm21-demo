@@ -3,13 +3,24 @@
 With Project Loom, the subjects of parallelism and concurrency became relevant topic in the JVM ecosystem.
 Project Loom provides asynchronous performance with regular synchronous thread-per-request Java code.
 
-## Simple example of how Project Loom's Virtual threads work
+To understand where Virtual Threads fit in software architecture and what limitations they have I decided to benchmark
+various approaches to concurrent and parallel operations.
+
+TLDR:
+
+* Code that handles blocking IO operations should always run in a virtual thread.
+* For parallel CPU bound operations, use Java's .parallelStream(). It's very optimized and balanced for various
+  scenarios and beats most approaches, including homegrown algorithms and Kotlin's coroutines.
+* Don't do IO operations from parallelStream(). parallelStream() uses the ForkJoinPool.commonPool and that uses OS
+  threads which makes the IO operations blocking. This is by
+  design: https://mail.openjdk.org/pipermail/loom-dev/2019-September/000752.html
+* When using virtual threads, test carefully how the application and OS work under high load. With Virtual Threads it's
+  for example very easy to use up all OS sockets. Test, configure limits, retest.
+
+## Simple example of how Project Loom's Virtual Threads work
 
 If you run the following function in regular OS thread, the OS thread will be blocked when the code calls read() for the
-socket.
-If it is run in a Virtual Thread, the JVM unmounts the execution context (continuation) from the OS carrier thread. When
-the data is ready and there is a free OS thread, the continuation will be mounted to some OS thread and execution will
-continue with the data.
+socket. This reserves the OS thread (which is a limited resource) and uses memory just to wait for the data.
 
 ```
 public String getUrlContents(String url)  {
@@ -22,6 +33,11 @@ public String getUrlContents(String url)  {
 }
 ```
 
+If it is run in a Virtual Thread, the JVM unmounts the execution context (continuation) from the OS carrier thread. When
+the data is ready and there is a free OS thread, the continuation will be mounted to some OS thread and execution will
+continue with the data. This allows the JVM to handle a lot more IO operations than previously as unmounted virtual
+threads that are waiting for a response don't block OS threads and use less memory.
+
 The great thing about Project Loom is that the application code doesn't need to be changed to get the concurrency
 performance advantages. The programming paradigm stays the same. The feature works for all JVM based languages.
 Async programming without the hassle of async/await or promises or futures or callbacks.
@@ -29,30 +45,86 @@ Async programming without the hassle of async/await or promises or futures or ca
 I think Project Loom is a great improvement for the JVM ecosystem and together with Kotlin, GraalVM, new microservice
 based server frameworks and other performance improvements JVM is becoming a serious contender for backend development.
 
-# Understanding the performance and limitations of various approaches
+# Understanding the performance and limitations of various approaches to parallelization
 
-I wrote test code that tests various map and parallel map implementations using adjustable load to understand how they
-compare. I wrote 6 implementations for Java and 10 for Kotlin.
+## Here's what I learned
 
-## Avoiding microbenchmark issues
+* It's difficult to write a balanced parallel map() operation that works in most use different usecases.
+* Internet has lots of examples of bad parallel map() implementations. ChatGPT is able to produce more.
+* Most approaches have overhead that makes them slower than parallelStream().
+* It's not worth writing your own parallel map() except as a learning experience.
+* Benchmarking, covering enough test cases and trying to make correct error free code is surprisingly difficult.
+* Virtual threads have really good performance with CPU based loads. With thread pool they achieve a similar performance
+  as pooled OS threads
 
-I didn't manage to configure JMH to provide sensible data with the long running tests, so there might be
-microbenchmarking related issues. I tried take handle those with following approaches:
+## What did I do?
 
-* tests are using one million items and each approach is tested 8 items
-* data is accessed from an ArrayList of one million items. This increases CPU cache misses. The array is regenerated for
-  each repeat
-* there are two load functions that use CPU. One is added to a counter n times based on the item's sequence number. Fast
-  versions uses int counter, Slow versions use long counter.
-* Functions are warmed up with /10 items (100000) and there are one second sleep between each map() tested function
-    * load functions are warmed up first
-    * each tested function is warmed up also and tested 8 times
-* Functions return values and use return values to ensure that JIT does not optimize the function out
-* Functions are tested with one million items, 8 times repeatedly with one second sleep between tested functions
-* Test code is implemented fully in Java and fully in Kotlin. This ensures there are no issues switching between Java
-  and Kotlin
+First I wrote test code that tests various map and parallel map implementations using adjustable load. Initially I used
+Java's executors and then I implemented Java's Api and Kotlin's Api based versions.
 
-## Results
+For more thorough testing and to avoid microbenchmarking issues I wrote a test harness, refactored it a couple times to
+be more flexible. First I ran the alternatives against a million items with a heavy cpu based task. I also included
+a tests with light cpu load. This showed that with light loads parallel pmap()s had too much overhead. Kotlin's
+Coroutines and Java's parallelStream() seemed to have serial performance which was surprising.
+
+At some point I figured out that I didn't use a Dispatcher with runBlocking and all Coroutine based alternatives
+produced incorrect results as they used single thread to run the test code. Stream() and parallelStream() pmap()s
+included code from another pmap() which resulted in bad performance. Fixing all the issues with the alternatives
+finally produced good results that showed that parallelStream() had clearly the best performance against all other
+alternatives in most test cases.
+
+Added JMH tests for all the alternatives. I created separate JMH projects for Java and Kotlin to ensure that there was
+no issue in mixing up languages.
+
+I was disappointed in seeing how clearly my pmap()s lost to parallelStream(). After toying around with building my own
+threadpools, I realised that processing a single item per thread might have huge overhead because of context switches
+and cache misses etc. I implemented a block based version that processes n items per thread and module based approach
+that has n threads skipping list items. These showed similar or at times improved performance over parallelStream().
+
+To see the Java and Kotlin JMH results in a merged and sorted list I wrote a tool to load the JMH JSON outputs. The tool
+merges the results by used parameters and shows the results in sorted order. It also calculates relative performance
+compared to the fastest.
+
+I added test cases for simulating the mapping of small lists (1000 items) and this improved the tests by showing that
+different approaches had different characteristics depending on the work load. Comparing the results is a bit difficult
+as there are many alternatives, so I thought about joining the results for the different test cases. The merged result
+list is synthetic as it doesn't match real life processing loads. I added scaling based on the fastest item in each test
+group, which favors algorithms that have good results in all test cases. Slow results for any test case drop the overall
+score so much that only generally good algorithms stay in the top.
+
+## The approaches
+
+* Java Api
+    * .stream().map()
+    * .parallelStream().map()
+    * for(i in list) for mapping source to destination ArrayList
+* Executors based alternatives that used invokeAll and future.get(). Each thread handles a single item map()
+    * Executors.newVirtualThreadPerTaskExecutor() - launch new virtual thread for each task
+    * Executors.newFixedThreadPool(nThreads) - with availableProcessors() and 2 * availableProcessors()
+    * Executors.newFixedThreadPool(nThreads) copy that uses virtual threads - with availableProcessors() and 2 *
+      availableProcessors()
+    * Reused newFixedThreadPool() - with virtual threads
+    * Double the amount of threads for newFixedThreadPool with Virtual and OS threads
+* Processing more items in thread and using multiple threads
+    * Block based - divide list to n blocks and process each block fully in one thread
+        * availableProcessors() number of blocks - big blocks for each thread
+        * block limited to 500, 1000, 2000 or 4000 items
+    * Modulo based approach - each thread starts from different index: 0..n-1 and each one jumps n items forwards
+* Kotlin Api
+    * .map()
+    * List constructor: List(size) { index -> f(get(index)) }
+    * for(i in list) for mapping source to destination ArrayList
+* Kotlin Coroutines
+    * map { async { f(it) } }.map { it.await() } using runBlocking(Dispatchers.Default)
+    * above with a Semaphore
+    * above with runBlocking without Dispatcher
+    * above with Executors.newFixedThreadPool(getCpuCount())
+* Kotlin calling Java Api
+    * Executors based alternatives: Executors.newVirtualThreadPerTaskExecutor(), FixedVirtualThreadPool
+    * Kotlin calling function from Java code that calls parallelStream().map()
+    * Kotlin calling parallelStream().map() directly
+
+## The results
 
 ### Round 1 - Fast tests
 
@@ -98,7 +170,7 @@ Analysis:
 * Other approaches suffer from various things that cause overhead: unnecessary list creation, thread and thread pool
   overhead and coroutine overhead
 * parallelStream() is probably able to improve performance because it streams items and does not create big temporary
-  lists. Also, it's able to reuse its thread pool when other approaches recreate pools.
+  lists. Also, it's able to reuse the common ForkJoin pool when most other approaches recreate their pools.
 
 ### Round 2 - Slow tests
 
@@ -157,5 +229,6 @@ Analysis:
 * parallelStream()'s interaction with virtual threads is not documented.
 
 TODO:
+
 * parallelStream with virtual threads
 * test .collect() .toList() on where it's run: virtual thread or OS thread

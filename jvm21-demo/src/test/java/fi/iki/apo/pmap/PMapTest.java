@@ -15,13 +15,13 @@ public class PMapTest {
             var list = listOf(c, integer -> integer);
             Function<Integer, String> integerStringFunction = i -> "a" + i;
             var expected = JavaMapAlternatives.mapFastest(list, integerStringFunction);
-            List<String> actual = PartitionedOpsPerThreadMap.pmapPartitionModuloFixedReused(list, integerStringFunction);
+            List<String> actual = MultipleOpsPerThreadMap.pmapModuloFixedReused(list, integerStringFunction);
             assertEquals(expected, actual);
-            List<String> actual1 = PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFixedReused(list, integerStringFunction);
+            List<String> actual1 = MultipleOpsPerThreadMap.blockProcessorCpu.pmapBlockFixedReusedVT(list, integerStringFunction);
             assertEquals(expected, actual1);
-            List<String> actual2 = PartitionedOpsPerThreadMap.partitionSegmentCpu.pmapPartitionSegmentFJ(list, integerStringFunction);
+            List<String> actual2 = MultipleOpsPerThreadMap.blockProcessorCpu.pmapBlockFJ(list, integerStringFunction);
             assertEquals(expected, actual2);
-            List<String> actual3 = PartitionedOpsPerThreadMap.pmapPartitionModuloFJ(list, integerStringFunction);
+            List<String> actual3 = MultipleOpsPerThreadMap.pmapModuloFJ(list, integerStringFunction);
             assertEquals(expected, actual3);
         }
     }

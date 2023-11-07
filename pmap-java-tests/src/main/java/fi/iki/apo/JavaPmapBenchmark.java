@@ -1,7 +1,7 @@
 package fi.iki.apo;
 
 import fi.iki.apo.pmap.JavaApiMap;
-import fi.iki.apo.pmap.PartitionedOpsPerThreadMap;
+import fi.iki.apo.pmap.MultipleOpsPerThreadMap;
 import fi.iki.apo.pmap.SingleOpPerThreadMap;
 import fi.iki.apo.pmap.LoadGenerator;
 import org.openjdk.jmh.annotations.*;
@@ -94,6 +94,7 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapFixedVirtualThreadPool() {
         return runBenchmark(SingleOpPerThreadMap::pmapFixedVirtualThreadPool);
     }
+
     @Benchmark
     public List<Integer> pmapFixedReusedVirtualThreadPool() {
         return runBenchmark(SingleOpPerThreadMap::pmapFixedReusedVirtualThreadPool);
@@ -115,77 +116,114 @@ public class JavaPmapBenchmark {
     }
 
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedReusedCpu() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegmentCpu::pmapPartitionSegmentFixedReused);
+    public List<Integer> pmapBlockFixedReusedVTCpu() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReusedVT);
     }
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedCpu() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegmentCpu::pmapPartitionSegmentFixed);
+    public List<Integer> pmapBlockFixedReusedCpu() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReused);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedCpu() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixed);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFJCpu() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFJ);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT500() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReusedVT);
     }
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFJCpu() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegmentCpu::pmapPartitionSegmentFJ);
+    public List<Integer> pmapBlockFixedReused500() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReused);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixed500() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixed);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFJ500() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFJ);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT1000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReusedVT);
     }
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedReused500() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment500::pmapPartitionSegmentFixedReused);
+    public List<Integer> pmapBlockFixedReused1000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReused);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixed1000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixed);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFJ1000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFJ);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedVT);
     }
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixed500() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment500::pmapPartitionSegmentFixed);
+    public List<Integer> pmapBlockFixedReused2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReused);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFJ500() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment500::pmapPartitionSegmentFJ);
+    public List<Integer> pmapBlockFixed2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixed);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedReused1000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment1000::pmapPartitionSegmentFixedReused);
+    public List<Integer> pmapBlockFJ2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFJ);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixed1000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment1000::pmapPartitionSegmentFixed);
+    public List<Integer> pmapBlockFixedReusedVT4000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixedReusedVT);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFJ1000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment1000::pmapPartitionSegmentFJ);
+    public List<Integer> pmapBlockFixedReused4000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixedReused);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedReused2000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment2000::pmapPartitionSegmentFixedReused);
+    public List<Integer> pmapBlockFixed4000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixed);
     }
+
     @Benchmark
-    public List<Integer> pmapPartitionSegmentFixed2000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment2000::pmapPartitionSegmentFixed);
-    }
-    @Benchmark
-    public List<Integer> pmapPartitionSegmentFJ2000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment2000::pmapPartitionSegmentFJ);
-    }
-    @Benchmark
-    public List<Integer> pmapPartitionSegmentFixedReused4000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment4000::pmapPartitionSegmentFixedReused);
-    }
-    @Benchmark
-    public List<Integer> pmapPartitionSegmentFixed4000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment4000::pmapPartitionSegmentFixed);
-    }
-    @Benchmark
-    public List<Integer> pmapPartitionSegmentFJ4000() {
-        return runBenchmark(PartitionedOpsPerThreadMap.partitionSegment4000::pmapPartitionSegmentFJ);
+    public List<Integer> pmapBlockFJ4000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFJ);
     }
 
     @Benchmark
     public List<Integer> pmapPartitionModuloFixedReused() {
-        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFixedReused);
+        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFixedReused);
     }
+
     @Benchmark
     public List<Integer> pmapPartitionModuloFixed() {
-        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFixed);
+        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFixed);
     }
+
     @Benchmark
     public List<Integer> pmapPartitionModuloFJ() {
-        return runBenchmark(PartitionedOpsPerThreadMap::pmapPartitionModuloFJ);
+        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFJ);
     }
 
 }
