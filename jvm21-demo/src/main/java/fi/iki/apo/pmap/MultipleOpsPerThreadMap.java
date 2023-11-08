@@ -16,24 +16,43 @@ import static fi.iki.apo.pmap.JavaMapAlternatives.getCpuCount;
 
 public class MultipleOpsPerThreadMap {
     public static BlockProcessor blockProcessorCpu = new BlockProcessor(null, getCpuCount());
-    public static BlockProcessor blockProcessor250 = new BlockProcessor(250,null);
-    public static BlockProcessor blockProcessor500 = new BlockProcessor(500,null);
-    public static BlockProcessor blockProcessor1000 = new BlockProcessor(1000,null);
-    public static BlockProcessor blockProcessor2000 = new BlockProcessor(2000,null);
-    public static BlockProcessor blockProcessor4000 = new BlockProcessor(4000,null);
+    public static BlockProcessor blockProcessor250 = new BlockProcessor(250, null);
+    public static BlockProcessor blockProcessor500 = new BlockProcessor(500, null);
+    public static BlockProcessor blockProcessor1000 = new BlockProcessor(1000, null);
+    public static BlockProcessor blockProcessor2000 = new BlockProcessor(2000, null);
+    public static BlockProcessor blockProcessor4000 = new BlockProcessor(4000, null);
+    public static BlockProcessor blockProcessor8000 = new BlockProcessor(8000, null);
+    public static BlockProcessor blockProcessor16000 = new BlockProcessor(16000, null);
+    public static BlockProcessor blockProcessor32000 = new BlockProcessor(32000, null);
 
     public record BlockProcessor(Integer blockSize, Integer blockCount) {
 
-        private  <T> int resolveBlockCount(List<T> list) {
-            if(blockCount != null) {
-                return blockCount();
-            } else if(blockSize != null) {
-                return list.size()/blockSize;
+        private <T> List<BlockRange> resolveBlockCount(List<T> list) {
+            if (blockCount != null) {
+                return BlockRange.splitByBlockCount(list.size(), blockCount);
+            } else if (blockSize != null) {
+                return BlockRange.splitByBlockSize(list.size(), blockSize);
             }
             throw new RuntimeException("Needs blocksize or blockCount");
         }
+
         @NotNull
         public <T, R> List<R> pmapBlockFixedReusedVT(List<T> list, Function<T, R> f) {
+            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
+                mapBlock(list, arr, min, max, f);
+                return true;
+            });
+            try {
+                for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
+                    future.get();
+                }
+                return Arrays.asList((R[]) result.rArr);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        @NotNull
+        public <T, R> List<R> pmapBlockFixedReusedDoubleVT(List<T> list, Function<T, R> f) {
             final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
                 mapBlock(list, arr, min, max, f);
                 return true;
@@ -86,7 +105,6 @@ public class MultipleOpsPerThreadMap {
             ForkJoinPool.commonPool().invoke(new ForkJoinProcessTask(result.tasks, null));
             return Arrays.asList((R[]) result.rArr);
         }
-
     }
 
     public static <T, R> List<R> pmapModuloFixedReused(List<T> list, Function<T, R> f) {
@@ -127,10 +145,9 @@ public class MultipleOpsPerThreadMap {
 
     private record TasksAndArray<M>(List<M> tasks, Object[] rArr) {
         @NotNull
-        private static <M> TasksAndArray<M> createBlockTasks(int size, int blockCount, Function3<Object[], Integer, Integer, M> mapF) {
+        private static <M> TasksAndArray<M> createBlockTasks(int size, List<BlockRange> blockRanges, Function3<Object[], Integer, Integer, M> mapF) {
             final var rArr = new Object[size];
-            final var blockRanges = BlockRange.split(size, blockCount);
-            final var tasks = JavaMapAlternatives.mapFastest(blockRanges, s -> mapF.invoke(rArr, s.min, s.max));
+            final var tasks = JavaMapAlternatives.mapFastest(blockRanges, s -> mapF.invoke(rArr, s.min(), s.max()));
             return new TasksAndArray<>(tasks, rArr);
         }
 
@@ -145,27 +162,6 @@ public class MultipleOpsPerThreadMap {
             return new TasksAndArray<>(tasks, rArr);
         }
     }
-
-    record BlockRange(int min, int max) {
-        static public List<BlockRange> split(int size, int blockCount) {
-            final var tasks = new ArrayList<BlockRange>(blockCount);
-            final var minBlockSize = size / blockCount;
-            var largerTasks = size % blockCount;
-            var lowerLimit = 0;
-            while (lowerLimit < size) {
-                int blockSize = minBlockSize;
-                if (largerTasks > 0) {
-                    largerTasks--;
-                    blockSize++;
-                }
-                int upperLimit = lowerLimit + blockSize - 1;
-                tasks.add(new BlockRange(lowerLimit, upperLimit));
-                lowerLimit += blockSize;
-            }
-            return tasks;
-        }
-    }
-
 
     private static <T, R> void mapBlock(List<T> list, Object[] rArr, int lowerLimit, int upperLimit, Function<T, R> f) {
         for (int c = lowerLimit; c <= upperLimit; c++) {

@@ -7,7 +7,7 @@ import java.lang.reflect.Type
 
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    val paths = listOf("pmap-java-tests/jmh-result.json", "pmap-kotlin-tests/jmh-result.json")
+    val paths = listOf("pmap-java-tests/jmh-result.json" /*, "pmap-kotlin-tests/jmh-result.json"*/)
 
     mergeAndPrint(paths) { testName ->
         testName.multiReplace(mapOf("fi.iki.apo." to "", "PmapBenchmark" to ""))
@@ -19,23 +19,67 @@ private fun mergeAndPrint(paths: List<String>, testNameFormatter: (String) -> St
     gsonBuilder.registerTypeAdapter(Time::class.java, TimeDeserializer())
     val gson = gsonBuilder.create()
     val typeToken = object : TypeToken<List<JmhResult>>() {}.type
-    val jsonData = paths.map { gson.fromJson<List<JmhResult>>(FileReader(it), typeToken) }
-    val merged = jsonData.fold(listOf<JmhResult>()) { acc, jmhResults -> acc + jmhResults }
+    val jsonData = paths.map { gson.fromJson<List<JmhResult>>(FileReader(it), typeToken) }.flatten()
+    val data = convertResultsToAvg(jsonData)
+    val merged = data.fold(listOf<JmhResult>()) { acc, jmhResults -> acc + jmhResults }
     val groupByParams = merged.groupBy { it.params }
     val groupedAndSortedAndRenamed = groupByParams.mapValues { (_, results) ->
         results.sortedBy { it.primaryMetric.score }.map { it.copy(benchmark = testNameFormatter(it.benchmark)) }
     }
-    printCategorySpreadInfo(groupedAndSortedAndRenamed)
-    printResultsByParamCategories(groupedAndSortedAndRenamed)
-    printCombinedResultsWithScaling(groupedAndSortedAndRenamed)
+    val groupedAndChecked = checkForMissingEntries(groupedAndSortedAndRenamed)
+    val categoryMultipliers = calculateCategoryMultipliers(groupedAndChecked)
+    printCategoryMultipliers(categoryMultipliers)
+    printResultsByParamCategories(groupedAndChecked)
+    printCombinedResultsWithScaling(groupedAndChecked, categoryMultipliers)
 }
 
-fun printCategorySpreadInfo(groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>) {
-    val categorySpread =
-        groupedAndSortedAndRenamed.entries.map { (key, results) -> key to results.lastOrNull()!!.primaryMetric.score / results.first()!!.primaryMetric.score }
-            .sortedBy { (key, spread) -> -spread }
-    println("*** Result spread by categories")
-    categorySpread.forEach { (category, spread) ->
+fun convertResultsToAvg(jsonData: List<JmhResult>): List<JmhResult> {
+    return jsonData.map { result ->
+        if (result.mode == "thrpt") {
+            val m = result.primaryMetric
+            val c = when (result.primaryMetric.scoreUnit) {
+                "ops/s" -> ::toMsOps
+                else -> throw Exception("Unsupported ${result.primaryMetric.scoreUnit}")
+            }
+            result.copy(
+                mode = "avgt",
+                primaryMetric = m.copy(
+                    score = c(m.score),
+                    scoreError = c(m.scoreError),
+                    scoreConfidence = m.scoreConfidence.map(c),
+                    scorePercentiles = m.scorePercentiles.mapValues { (k, v) -> c(v) },
+                    rawData = m.rawData.map { it.map(c) }
+                )
+            )
+        } else result
+    }
+}
+
+fun toMsOps(d: Double) = 1 / d * 1000
+
+fun checkForMissingEntries(groupByParams: Map<Map<String, String>, List<JmhResult>>): Map<Map<String, String>, List<JmhResult>> {
+    val allBenchmarkNames = groupByParams.values.flatten().map { it.benchmark }.toSet()
+    val paramsBenchmarkNames = groupByParams.mapValues { (_, results) -> results.map { it.benchmark }.toSet() }
+    for ((key, benchmarkNames) in paramsBenchmarkNames) {
+        val missing = allBenchmarkNames.filter { !benchmarkNames.contains(it) }
+        if (missing.isNotEmpty()) {
+            println("$key is missing: ${missing.joinToString(",")}")
+        }
+    }
+    return allBenchmarkNames.fold(groupByParams) { acc, s ->
+        val benchmarkInAllGroups = acc.values.all { list -> list.any { it.benchmark == s } }
+        if (benchmarkInAllGroups)
+            acc
+        else
+            acc.mapValues { (_, results) ->
+                results.filter { it.benchmark != s }
+            }
+    }
+}
+
+fun printCategoryMultipliers(multipliers: Map<Map<String, String>, Double>) {
+    println("*** Category multipliers")
+    multipliers.forEach { (category, spread) ->
         println("%s %.1fx".format(category, spread))
     }
 }
@@ -67,24 +111,33 @@ private fun printResultsByParamCategories(
     }
 }
 
-fun printCombinedResultsWithScaling(groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>) {
-    val fastestInCategories =
-        groupedAndSortedAndRenamed.map { (key, results) -> key to results.first().primaryMetric.score }
-    val slowestFastestInCategory =
-        fastestInCategories.maxOfOrNull { (key, score) -> score } ?: throw Exception("no max")
-    val categoryMultipliers = fastestInCategories.associate { (key, score) -> key to slowestFastestInCategory / score }
+fun printCombinedResultsWithScaling(
+    groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>,
+    categoryMultipliers: Map<Map<String, String>, Double>
+) {
     val benchmarkResults = groupedAndSortedAndRenamed.values.flatten()
         .groupBy(
             { it.benchmark },
             { result -> categoryMultipliers.getOrElse(result.params) { throw Exception("bad category") } * result.primaryMetric.score })
     val sortedTotalResults =
-        benchmarkResults.map { (key, results) -> key to results.sum() }.sortedBy { (key, total) -> total }
+        benchmarkResults.map { (key, results) -> key to results.sum() }.sortedBy { (_, total) -> total }
     println("*** Totals, scaled to match")
-    val longestBenchmarkNameLength = sortedTotalResults.max { (key, score) -> key.length } ?: 0
+    val longestBenchmarkNameLength = sortedTotalResults.max { (key, _) -> key.length } ?: 0
     val (_, firstScore) = sortedTotalResults.first()
     sortedTotalResults.forEach { (key, score) ->
         println("%-${longestBenchmarkNameLength + 1}s %9.3f - %.1fx".format(key, score, score / firstScore))
     }
+}
+
+private fun calculateCategoryMultipliers(groupedAndSortedAndRenamed: Map<Map<String, String>, List<JmhResult>>): Map<Map<String, String>, Double> {
+    val fastestInCategories =
+        groupedAndSortedAndRenamed.map { (key, results) -> key to results.first().primaryMetric.score }
+    val slowestOverall =
+        fastestInCategories.maxOfOrNull { (_, score) -> score } ?: throw Exception("no max")
+    val categoryMultipliers = fastestInCategories.associate { (key, score) ->
+        key to (slowestOverall / score)
+    }
+    return categoryMultipliers
 }
 
 fun String.multiReplace(map: Map<String, String>) =

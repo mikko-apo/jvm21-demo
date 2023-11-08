@@ -119,6 +119,7 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapBlockFixedReusedVTCpu() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReusedVT);
     }
+
     @Benchmark
     public List<Integer> pmapBlockFixedReusedCpu() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReused);
@@ -138,6 +139,7 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapBlockFixedReusedVT500() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReusedVT);
     }
+
     @Benchmark
     public List<Integer> pmapBlockFixedReused500() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReused);
@@ -157,6 +159,7 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapBlockFixedReusedVT1000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReusedVT);
     }
+
     @Benchmark
     public List<Integer> pmapBlockFixedReused1000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReused);
@@ -176,6 +179,7 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapBlockFixedReusedVT2000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedVT);
     }
+
     @Benchmark
     public List<Integer> pmapBlockFixedReused2000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReused);
@@ -194,6 +198,21 @@ public class JavaPmapBenchmark {
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT4000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixedReusedVT);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT8000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor8000::pmapBlockFixedReusedVT);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT16000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor16000::pmapBlockFixedReusedVT);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedVT32000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor32000::pmapBlockFixedReusedVT);
     }
 
     @Benchmark
@@ -225,5 +244,4 @@ public class JavaPmapBenchmark {
     public List<Integer> pmapPartitionModuloFJ() {
         return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFJ);
     }
-
 }

@@ -49,7 +49,6 @@ public class SingleOpPerThreadMap {
         }
     }
 
-
     public static <T, R> List<R> pmapFixedVirtualThreadPool(List<T> list, Function<T, R> f) {
         return pmapFixedVirtualThreadPool(list, f, JavaMapAlternatives.getCpuCount());
     }
