@@ -98,7 +98,7 @@ private fun printResultsByParamCategories(
             val percentageOfFirst = score / first.primaryMetric.score
             val relativeError = scoreError / score * 100
             println(
-                "%-${longestBenchmarkNameLength + 1}s %9.3f ± %4.1f%% (%8.3f) %s - %.1fx".format(
+                "%-${longestBenchmarkNameLength + 1}s %9.3f ± %4.1f%% (%8.3f) %s - %.2fx".format(
                     item.benchmark,
                     score,
                     relativeError,
@@ -125,7 +125,7 @@ fun printCombinedResultsWithScaling(
     val longestBenchmarkNameLength = sortedTotalResults.max { (key, _) -> key.length } ?: 0
     val (_, firstScore) = sortedTotalResults.first()
     sortedTotalResults.forEach { (key, score) ->
-        println("%-${longestBenchmarkNameLength + 1}s %9.3f - %.1fx".format(key, score, score / firstScore))
+        println("%-${longestBenchmarkNameLength + 1}s %9.3f - %.2fx".format(key, score, score / firstScore))
     }
 }
 

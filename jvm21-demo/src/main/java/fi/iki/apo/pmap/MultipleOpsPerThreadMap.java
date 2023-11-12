@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 import static fi.iki.apo.pmap.JavaMapAlternatives.getCpuCount;
@@ -27,6 +24,33 @@ public class MultipleOpsPerThreadMap {
 
     public record BlockProcessor(Integer blockSize, Integer blockCount) {
 
+        @NotNull
+        public <T, R> List<R> pmapBlockFixedReused(List<T> list, Function<T, R> f) {
+            return executeBlockPMap(list, f, JavaMapAlternatives.reusedFixedThreadPool);
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapBlockFixedReusedDouble(List<T> list, Function<T, R> f) {
+            return executeBlockPMap(list, f, JavaMapAlternatives.reusedFixedThreadPoolDoubleThreads);
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapBlockFixedReusedVT(List<T> list, Function<T, R> f) {
+            return executeBlockPMap(list, f, JavaMapAlternatives.reusedVirtualFixedThreadPool);
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapBlockFixedReusedDoubleVT(List<T> list, Function<T, R> f) {
+            return executeBlockPMap(list, f, JavaMapAlternatives.reusedVirtualFixedThreadPoolDoubleThreads);
+        }
+
+        @NotNull
+        public <T, R> List<R> pmapBlockFixed(List<T> list, Function<T, R> f) {
+            try (final var executorService = Executors.newFixedThreadPool(getCpuCount())) {
+                return executeBlockPMap(list, f, executorService);
+            }
+        }
+
         private <T> List<BlockRange> resolveBlockCount(List<T> list) {
             if (blockCount != null) {
                 return BlockRange.splitByBlockCount(list.size(), blockCount);
@@ -37,108 +61,62 @@ public class MultipleOpsPerThreadMap {
         }
 
         @NotNull
-        public <T, R> List<R> pmapBlockFixedReusedVT(List<T> list, Function<T, R> f) {
-            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
-                mapBlock(list, arr, min, max, f);
-                return true;
-            });
-            try {
-                for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
-                    future.get();
-                }
-                return Arrays.asList((R[]) result.rArr);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        @NotNull
-        public <T, R> List<R> pmapBlockFixedReusedDoubleVT(List<T> list, Function<T, R> f) {
-            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
-                mapBlock(list, arr, min, max, f);
-                return true;
-            });
-            try {
-                for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
-                    future.get();
-                }
-                return Arrays.asList((R[]) result.rArr);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @NotNull
-        public <T, R> List<R> pmapBlockFixedReused(List<T> list, Function<T, R> f) {
-            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
-                mapBlock(list, arr, min, max, f);
-                return true;
-            });
-            try {
-                for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
-                    future.get();
-                }
-                return Arrays.asList((R[]) result.rArr);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @NotNull
-        public <T, R> List<R> pmapBlockFixed(List<T> list, Function<T, R> f) {
-            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> (Callable<Boolean>) () -> {
-                mapBlock(list, arr, min, max, f);
-                return true;
-            });
-            try (final var executorService = Executors.newFixedThreadPool(getCpuCount())) {
-                for (var future : executorService.invokeAll(result.tasks)) {
-                    future.get();
-                }
-                return Arrays.asList((R[]) result.rArr);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        private <T, R> List<R> executeBlockPMap(List<T> list, Function<T, R> f, ExecutorService executor) {
+            final var tasksWithResultArray = TasksAndArray.createBlockTasks(list.size(),
+                    resolveBlockCount(list),
+                    (arr, min, max) -> (Callable<Boolean>) () -> {
+                        mapBlock(list, arr, min, max, f);
+                        return true;
+                    });
+            return executeTasks(executor, tasksWithResultArray);
         }
 
         @NotNull
         public <T, R> List<R> pmapBlockFJ(List<T> list, Function<T, R> f) {
-            final var result = TasksAndArray.createBlockTasks(list.size(), resolveBlockCount(list), (arr, min, max) -> new ForkJoinProcessTask(null, () -> mapBlock(list, arr, min, max, f)));
-            ForkJoinPool.commonPool().invoke(new ForkJoinProcessTask(result.tasks, null));
-            return Arrays.asList((R[]) result.rArr);
+            final var result = TasksAndArray.createBlockTasks(list.size(),
+                    resolveBlockCount(list),
+                    (arr, min, max) -> new ForkJoinProcessTask(null, () -> mapBlock(list, arr, min, max, f)));
+           return executeTasksInFJP(result);
         }
     }
 
     public static <T, R> List<R> pmapModuloFixedReused(List<T> list, Function<T, R> f) {
-        final var result = TasksAndArray.createModuloTasks(list.size(), (arr, startIndex, jumpSize) -> (Callable<Boolean>) () -> {
+        final var tasksAndResultArray = TasksAndArray.createModuloTasks(list.size(), (arr, startIndex, jumpSize) -> (Callable<Boolean>) () -> {
             mapWithModulo(list, arr, startIndex, jumpSize, f);
             return true;
         });
-        try {
-            for (var future : JavaMapAlternatives.reusedVirtualFixedThreadPool.invokeAll(result.tasks)) {
-                future.get();
-            }
-            return Arrays.asList((R[]) result.rArr);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return executeTasks(JavaMapAlternatives.reusedVirtualFixedThreadPool, tasksAndResultArray);
     }
 
     public static <T, R> List<R> pmapModuloFixed(List<T> list, Function<T, R> f) {
-        final var result = TasksAndArray.createModuloTasks(list.size(), (arr, startIndex, jumpSize) -> (Callable<Boolean>) () -> {
+        final var tasksAndResultArray = TasksAndArray.createModuloTasks(list.size(), (arr, startIndex, jumpSize) -> (Callable<Boolean>) () -> {
             mapWithModulo(list, arr, startIndex, jumpSize, f);
             return true;
         });
         try (final var executorService = Executors.newFixedThreadPool(getCpuCount())) {
-            for (var future : executorService.invokeAll(result.tasks)) {
-                future.get();
-            }
-            return Arrays.asList((R[]) result.rArr);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            return executeTasks(executorService, tasksAndResultArray);
         }
     }
 
     public static <T, R> List<R> pmapModuloFJ(List<T> list, Function<T, R> f) {
         final var result = TasksAndArray.createModuloTasks(list.size(), (arr, startIndex, jumpSize) -> new ForkJoinProcessTask(null, () -> mapWithModulo(list, arr, startIndex, jumpSize, f)));
+        return executeTasksInFJP(result);
+    }
+
+    @NotNull
+    private static <R> List<R> executeTasks(ExecutorService executor, TasksAndArray<Callable<Boolean>> tasksWithResultArray) {
+        try {
+            for (var future : executor.invokeAll(tasksWithResultArray.tasks)) {
+                future.get();
+            }
+            return Arrays.asList((R[]) tasksWithResultArray.rArr);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @NotNull
+    private static <R> List<R> executeTasksInFJP(TasksAndArray<ForkJoinProcessTask> result) {
         ForkJoinPool.commonPool().invoke(new ForkJoinProcessTask(result.tasks, null));
         return Arrays.asList((R[]) result.rArr);
     }

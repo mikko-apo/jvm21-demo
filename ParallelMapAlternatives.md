@@ -1,21 +1,30 @@
 # Parallel Map Alternatives with Java and Kotlin
 
-With Project Loom, the subjects of parallelism and concurrency became relevant topic in the JVM ecosystem.
+With Project Loom, the subjects of parallelism and concurrency became relevant topics in the JVM ecosystem.
 Project Loom provides asynchronous performance with regular synchronous thread-per-request Java code.
 
 To understand where Virtual Threads fit in software architecture and what limitations they have I decided to benchmark
-various approaches to concurrent and parallel operations.
+various approaches to parallel operations.
+
+My initial attempts and various alternatives copied from the internet did not show a big difference between Virtual and
+regular OS threads. Also, Java's .parallelStream() seemed to have an unrivalled performance. After testing various
+approaches I figured out that I need to plan my approach better. I managed to create a parallel map() implementation
+that is about 20% faster than .parallelStream() with all CPU bound loads.
 
 TLDR:
 
 * Code that handles blocking IO operations should always run in a virtual thread.
-* For parallel CPU bound operations, use Java's .parallelStream(). It's very optimized and balanced for various
-  scenarios and beats most approaches, including homegrown algorithms and Kotlin's coroutines.
 * Don't do IO operations from parallelStream(). parallelStream() uses the ForkJoinPool.commonPool and that uses OS
-  threads which makes the IO operations blocking. This is by
+  threads which make the IO operations blocking. This is by
   design: https://mail.openjdk.org/pipermail/loom-dev/2019-September/000752.html
-* When using virtual threads, test carefully how the application and OS work under high load. With Virtual Threads it's
-  for example very easy to use up all OS sockets. Test, configure limits, retest.
+* When using virtual threads, test carefully how the application and OS work under high load. For example it's
+  for example very easy to use up all OS sockets with virtual threads. Remember to performance test, configure limits
+  and retest.
+* For parallel CPU bound operations, Java's .parallelStream() is ok. It's very optimized and balanced for various
+  scenarios and beats most approaches.
+* There is no single parallel map() approach that covers all CPU bound cases. One algorithm might be fastest for certain
+  data payloads while it has overhead for other cases. Benchmarking with real production data is the only way to squeeze
+  the last percentages of performance.
 
 ## Simple example of how Project Loom's Virtual Threads work
 

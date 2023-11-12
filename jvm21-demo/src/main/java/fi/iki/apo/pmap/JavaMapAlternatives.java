@@ -26,8 +26,18 @@ public class JavaMapAlternatives {
             Thread.ofVirtual().factory(),
             new ThreadPoolExecutor.AbortPolicy()
     );
+    static final ThreadPoolExecutor reusedVirtualFixedThreadPoolDoubleThreads = new ThreadPoolExecutor(
+            getCpuCount()*2,
+            getCpuCount()*2,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue(),
+            Thread.ofVirtual().factory(),
+            new ThreadPoolExecutor.AbortPolicy()
+    );
 
     static final ExecutorService reusedFixedThreadPool = Executors.newFixedThreadPool(getCpuCount());
+    static final ExecutorService reusedFixedThreadPoolDoubleThreads = Executors.newFixedThreadPool(getCpuCount()*2);
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

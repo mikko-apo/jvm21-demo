@@ -181,6 +181,16 @@ public class JavaPmapBenchmark {
     }
 
     @Benchmark
+    public List<Integer> pmapBlockFixedReusedDoubleVT2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedDoubleVT);
+    }
+
+    @Benchmark
+    public List<Integer> pmapBlockFixedReusedDouble2000() {
+        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedDouble);
+    }
+
+    @Benchmark
     public List<Integer> pmapBlockFixedReused2000() {
         return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReused);
     }
