@@ -1,5 +1,7 @@
 package fi.iki.apo.pmap;
 
+import fi.iki.apo.pmap.simplethreadpool.SimpleThreadPool;
+
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -34,6 +36,7 @@ public class JavaMapAlternatives {
 
     public static final ExecutorService reusedFixedThreadPool = Executors.newFixedThreadPool(getCpuCount());
     public static final ExecutorService reusedFixedThreadPoolDoubleThreads = Executors.newFixedThreadPool(getCpuCount()*2);
+    public static final SimpleThreadPool reusedSimpleThreadPool = new SimpleThreadPool(getCpuCount()*2);
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

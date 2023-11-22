@@ -25,6 +25,7 @@ public class PMapTest {
             assertEquals(expected, MultipleOpsPerThreadMap.blockSize2000.pmapBlockFixed(list, integerStringFunction));
             assertEquals(expected, MultipleOpsPerThreadMap.blockSize2000.reusedFixedThreadPool.pmap(list, integerStringFunction));
             assertEquals(expected, MultipleOpsPerThreadMap.blockSize2000.reusedVirtualFixedThreadPool.pmap(list, integerStringFunction));
+            assertEquals(expected, MultipleOpsPerThreadMap.blockSize2000.reusedSimpleThreadPool.pmap(list, integerStringFunction));
         }
     }
 

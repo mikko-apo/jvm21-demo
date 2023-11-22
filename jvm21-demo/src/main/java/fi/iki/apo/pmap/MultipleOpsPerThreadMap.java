@@ -3,6 +3,7 @@ package fi.iki.apo.pmap;
 import fi.iki.apo.pmap.block.BlockProcessor;
 import fi.iki.apo.pmap.forkjoinpool.ForkJoinProcessTask;
 import fi.iki.apo.pmap.modulo.ModuloProcessor;
+import fi.iki.apo.pmap.simplethreadpool.SimpleThreadPool;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +35,15 @@ public class MultipleOpsPerThreadMap {
             for (var future : executor.invokeAll(tasks)) {
                 future.get();
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <R> List<R> executeTasksInSimplePool(SimpleThreadPool pool, TasksAndArray<Callable<Boolean>> tasksWithResultArray) {
+        try {
+            pool.submitCallables(tasksWithResultArray.tasks());
+            return Arrays.asList((R[]) tasksWithResultArray.rArr());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

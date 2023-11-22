@@ -87,7 +87,8 @@ public class ParallelMapPerfTest {
 */
         perf
                 .addTestRun("pmap with Java list.parallelStream()", (l) -> JavaApiMap.pmapParallelStream(l, testF).size())
-                .addTestRun("pmap with Java pmap.blockSize2000.reusedVirtualFixedThreadPool", (l) -> MultipleOpsPerThreadMap.blockSize2000.reusedVirtualFixedThreadPool.pmap(l, testF).size());
+                .addTestRun("pmap with Java pmap.blockSize2000.reusedVirtualFixedThreadPool", (l) -> MultipleOpsPerThreadMap.blockSize2000.reusedVirtualFixedThreadPool.pmap(l, testF).size())
+                .addTestRun("pmap with Java pmap.blockSize2000.reusedSimpleThreadPool", (l) -> MultipleOpsPerThreadMap.blockSize2000.reusedSimpleThreadPool.pmap(l, testF).size());
 
         perf.runTests(repeats, 1000);
         return perf.testRunCount();

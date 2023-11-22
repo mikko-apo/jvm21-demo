@@ -15,6 +15,7 @@ public class BlockProcessor {
     public final PMapExecutorServiceBlock reusedVirtualFixedThreadPool;
     public final PMapExecutorServiceBlock reusedVirtualFixedThreadPoolDoubleThreads;
     public final PMapAlternative commonFJPool;
+    public final PMapAlternative reusedSimpleThreadPool;
     private BlockRangeFactory blockRangeFactory;
 
     public BlockProcessor(Integer blockSize, Integer blockCount) {
@@ -24,6 +25,7 @@ public class BlockProcessor {
         reusedVirtualFixedThreadPool = new PMapExecutorServiceBlock(blockRangeFactory, JavaMapAlternatives.reusedVirtualFixedThreadPool);
         reusedVirtualFixedThreadPoolDoubleThreads = new PMapExecutorServiceBlock(blockRangeFactory, JavaMapAlternatives.reusedVirtualFixedThreadPoolDoubleThreads);
         commonFJPool = new PMapFJBlock(blockRangeFactory);
+        reusedSimpleThreadPool = new PMapSimpleThreadPoolBlock(blockRangeFactory, JavaMapAlternatives.reusedSimpleThreadPool);
     }
 
     public static <T, R> void mapBlock(List<T> list, Object[] rArr, int lowerLimit, int upperLimit, Function<T, R> f) {
@@ -37,5 +39,4 @@ public class BlockProcessor {
             return new PMapExecutorServiceBlock(blockRangeFactory, executorService).pmap(list, f);
         }
     }
-
 }
