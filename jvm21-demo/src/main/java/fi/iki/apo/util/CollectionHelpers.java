@@ -37,4 +37,12 @@ public class CollectionHelpers {
             });
         }
     }
+
+    public static List<Integer> listOfInts(int i) {
+        final var arr = new ArrayList<Integer>(i);
+        for (int c = 0; c < i; c++) {
+            arr.add(c);
+        }
+        return arr;
+    }
 }

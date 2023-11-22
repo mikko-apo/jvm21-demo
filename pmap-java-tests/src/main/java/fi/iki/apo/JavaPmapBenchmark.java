@@ -111,147 +111,142 @@ public class JavaPmapBenchmark {
     }
 
     @Benchmark
-    public List<Integer> pmapFixedThreadPoolFastCreateResolve() {
-        return runBenchmark(SingleOpPerThreadMap::pmapFixedThreadPoolFastCreateResolve);
-    }
-
-    @Benchmark
     public List<Integer> pmapBlockFixedReusedVTCpu() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockCountCpu.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedCpu() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixedReused);
+        return runBenchmark(MultipleOpsPerThreadMap.blockCountCpu.reusedFixedThreadPool::pmap);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedCpu() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.blockCountCpu::pmapBlockFixed);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFJCpu() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessorCpu::pmapBlockFJ);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockCountCpu.commonFJPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT500() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize500.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReused500() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixedReused);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize500.reusedFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixed500() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.blockSize500::pmapBlockFixed);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFJ500() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor500::pmapBlockFJ);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize500.commonFJPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT1000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize1000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReused1000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixedReused);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize1000.reusedFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixed1000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.blockSize1000::pmapBlockFixed);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFJ1000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor1000::pmapBlockFJ);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize1000.commonFJPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize2000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedDoubleVT2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedDoubleVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize2000.reusedVirtualFixedThreadPoolDoubleThreads.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedDouble2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReusedDouble);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize2000.reusedFixedThreadPoolDoubleThreads.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReused2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixedReused);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize2000.reusedFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixed2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.blockSize2000::pmapBlockFixed);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFJ2000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor2000::pmapBlockFJ);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize2000.commonFJPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT4000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize4000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT8000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor8000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize8000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT16000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor16000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize16000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReusedVT32000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor32000::pmapBlockFixedReusedVT);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize32000.reusedVirtualFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixedReused4000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixedReused);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize4000.reusedFixedThreadPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapBlockFixed4000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.blockSize4000::pmapBlockFixed);
     }
 
     @Benchmark
     public List<Integer> pmapBlockFJ4000() {
-        return runBenchmark(MultipleOpsPerThreadMap.blockProcessor4000::pmapBlockFJ);
+        return runBenchmark((list, f) -> MultipleOpsPerThreadMap.blockSize4000.commonFJPool.pmap(list, f));
     }
 
     @Benchmark
     public List<Integer> pmapPartitionModuloFixedReused() {
-        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFixedReused);
+        return runBenchmark(MultipleOpsPerThreadMap.modulo::pmapModuloFixedReused);
     }
 
     @Benchmark
     public List<Integer> pmapPartitionModuloFixed() {
-        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFixed);
+        return runBenchmark(MultipleOpsPerThreadMap.modulo::pmapModuloFixed);
     }
 
     @Benchmark
     public List<Integer> pmapPartitionModuloFJ() {
-        return runBenchmark(MultipleOpsPerThreadMap::pmapModuloFJ);
+        return runBenchmark(MultipleOpsPerThreadMap.modulo::pmapModuloFJ);
     }
 }

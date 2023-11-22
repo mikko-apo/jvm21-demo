@@ -1,11 +1,7 @@
 package fi.iki.apo.pmap;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 public class JavaMapAlternatives {
@@ -13,11 +9,11 @@ public class JavaMapAlternatives {
         return JavaApiMap.pmapParallelStream(list, f);
     }
 
-    static int getCpuCount() {
+    public static int getCpuCount() {
         return Runtime.getRuntime().availableProcessors();
     }
 
-    static final ThreadPoolExecutor reusedVirtualFixedThreadPool = new ThreadPoolExecutor(
+    public static final ThreadPoolExecutor reusedVirtualFixedThreadPool = new ThreadPoolExecutor(
             getCpuCount(),
             getCpuCount(),
             0L,
@@ -26,7 +22,7 @@ public class JavaMapAlternatives {
             Thread.ofVirtual().factory(),
             new ThreadPoolExecutor.AbortPolicy()
     );
-    static final ThreadPoolExecutor reusedVirtualFixedThreadPoolDoubleThreads = new ThreadPoolExecutor(
+    public static final ThreadPoolExecutor reusedVirtualFixedThreadPoolDoubleThreads = new ThreadPoolExecutor(
             getCpuCount()*2,
             getCpuCount()*2,
             0L,
@@ -36,8 +32,8 @@ public class JavaMapAlternatives {
             new ThreadPoolExecutor.AbortPolicy()
     );
 
-    static final ExecutorService reusedFixedThreadPool = Executors.newFixedThreadPool(getCpuCount());
-    static final ExecutorService reusedFixedThreadPoolDoubleThreads = Executors.newFixedThreadPool(getCpuCount()*2);
+    public static final ExecutorService reusedFixedThreadPool = Executors.newFixedThreadPool(getCpuCount());
+    public static final ExecutorService reusedFixedThreadPoolDoubleThreads = Executors.newFixedThreadPool(getCpuCount()*2);
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
